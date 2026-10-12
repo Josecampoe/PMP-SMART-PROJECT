@@ -12,7 +12,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../../context/AppContext';
 import { vinculosApi } from '../../lib/api';
@@ -29,6 +29,12 @@ export default function Inicio() {
     perfilTecnico,
     setSelectedCultivoId,
     addCultivo,
+    vincularParcelaPorCodigo,
+    theme,
+    isDarkMode,
+    toggleDarkMode,
+    language,
+    t,
   } = useApp();
 
   const [modalNuevoLote, setModalNuevoLote] = useState(false);
@@ -37,8 +43,6 @@ export default function Inicio() {
   const [hectareasLote, setHectareasLote] = useState('');
   const [ubicacionLote, setUbicacionLote] = useState('');
 
-  const [modalCodigo, setModalCodigo] = useState(false);
-  const [codigoGenerado, setCodigoGenerado] = useState('');
   const [modalVincular, setModalVincular] = useState(false);
   const [codigoInput, setCodigoInput] = useState('');
 
@@ -59,38 +63,31 @@ export default function Inicio() {
 
   const getSaludo = () => {
     const hora = new Date().getHours();
-    if (hora < 12) return 'Buenos días';
-    if (hora < 18) return 'Buenas tardes';
-    return 'Buenas noches';
-  };
-
-  const handleGenerarCodigo = async () => {
-    try {
-      const res = await vinculosApi.generarCodigo();
-      if (res.success && res.data) {
-        setCodigoGenerado(res.data.codigo);
-        setModalCodigo(true);
-      } else {
-        Alert.alert('Error', res.error || 'No se pudo generar el código');
-      }
-    } catch (e) {
-      Alert.alert('Error', 'Problema de conexión');
-    }
+    if (hora < 12) return t('saludoManana');
+    if (hora < 18) return t('saludoTarde');
+    return t('saludoNoche');
   };
 
   const handleVincular = async () => {
-    if (!codigoInput.trim()) return Alert.alert('Error', 'Ingresa el código');
+    if (!codigoInput.trim()) {
+      return Alert.alert('Error', language === 'en' ? 'Please enter the access code' : 'Ingresa el código');
+    }
     try {
-      const res = await vinculosApi.vincular(codigoInput.trim().toUpperCase());
+      const res = await vincularParcelaPorCodigo(codigoInput.trim().toUpperCase());
       if (res.success && res.data) {
-        Alert.alert('Éxito', `Vinculado con agricultor: ${res.data.agricultorNombre}`);
+        Alert.alert(
+          language === 'en' ? 'Plot Linked!' : '¡Parcela Vinculada!',
+          language === 'en'
+            ? `Plot "${res.data.cultivo.nombre}" linked successfully. You can now audit this plot.`
+            : `Parcela "${res.data.cultivo.nombre}" vinculada correctamente. Ahora puedes auditarla y revisar sus diagnósticos.`
+        );
         setModalVincular(false);
         setCodigoInput('');
       } else {
-        Alert.alert('Error', res.error || 'Código inválido');
+        Alert.alert('Error', res.error || (language === 'en' ? 'Invalid code or plot not found' : 'Código inválido o parcela no encontrada'));
       }
     } catch (e) {
-      Alert.alert('Error', 'Problema de conexión');
+      Alert.alert('Error', language === 'en' ? 'Connection error' : 'Problema de conexión');
     }
   };
 
@@ -99,26 +96,32 @@ export default function Inicio() {
 
   const nombre =
     rolActivo === 'agricultor'
-      ? (perfilAgricultor?.nombre || 'Agricultor').trim().split(' ')[0]
-      : (perfilTecnico?.nombre || 'Técnico').trim().split(' ')[0];
+      ? (perfilAgricultor?.nombre || (language === 'en' ? 'Farmer' : 'Agricultor')).trim().split(' ')[0]
+      : (perfilTecnico?.nombre || (language === 'en' ? 'Agronomist' : 'Técnico')).trim().split(' ')[0];
 
   const handleCrearPrimerLote = () => {
     if (!nombreLote.trim()) {
-      Alert.alert('Campo requerido', 'Ingresa el nombre de tu parcela o finca.');
+      Alert.alert(
+        language === 'en' ? 'Required field' : 'Campo requerido',
+        language === 'en' ? 'Enter your plot name.' : 'Ingresa el nombre de tu parcela o finca.'
+      );
       return;
     }
     const ha = parseFloat(hectareasLote.replace(',', '.'));
     if (isNaN(ha) || ha <= 0) {
-      Alert.alert('Campo inválido', 'Ingresa un número válido de hectáreas.');
+      Alert.alert(
+        language === 'en' ? 'Invalid field' : 'Campo inválido',
+        language === 'en' ? 'Enter a valid number of hectares.' : 'Ingresa un número válido de hectáreas.'
+      );
       return;
     }
 
-    addCultivo({
+    const nuevo = addCultivo({
       nombre: nombreLote.trim(),
       variedad: variedadLote,
       hectareas: Number(ha.toFixed(1)),
-      ubicacion: ubicacionLote.trim() || perfilAgricultor?.ubicacion || 'Zona Rural',
-      fechaSiembra: 'Reciente',
+      ubicacion: ubicacionLote.trim() || perfilAgricultor?.ubicacion || (language === 'en' ? 'Rural Area' : 'Zona Rural'),
+      fechaSiembra: language === 'en' ? 'Recent' : 'Reciente',
       estadoFitosanitario: 'optimo',
     });
 
@@ -126,62 +129,71 @@ export default function Inicio() {
     setHectareasLote('');
     setUbicacionLote('');
     setModalNuevoLote(false);
-    Alert.alert('¡Parcela Registrada!', 'Tu lote ha sido agregado correctamente.');
+    Alert.alert(
+      language === 'en' ? 'Plot Registered!' : '¡Parcela Registrada!',
+      language === 'en'
+        ? `Plot created successfully.\nUnique Access Code: ${nuevo.codigoAcceso}\nShare this code with your technician so they can review this plot.`
+        : `Tu parcela ha sido guardada.\nCódigo único de acceso: ${nuevo.codigoAcceso}\nComparte este código con tu técnico agrónomo para que pueda auditarla.`
+    );
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAF7' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
       {/* Header */}
-      <View style={{ paddingHorizontal: 24, paddingTop: 12, paddingBottom: 16, backgroundColor: '#FAFAF7' }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 14, backgroundColor: theme.bg }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Logo & Brand */}
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                backgroundColor: rolActivo === 'agricultor' ? '#E8F5E9' : '#E3F2FD',
+                width: 38,
+                height: 38,
+                borderRadius: 12,
+                backgroundColor: rolActivo === 'tecnico' ? (isDarkMode ? 'rgba(59, 130, 246, 0.18)' : '#EFF6FF') : theme.primaryLight,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 10,
               }}>
-              <FontAwesome
-                name={rolActivo === 'agricultor' ? 'leaf' : 'stethoscope'}
-                size={15}
-                color={rolActivo === 'agricultor' ? '#388E3C' : '#1565C0'}
+              <Ionicons
+                name={rolActivo === 'agricultor' ? 'leaf' : 'medical'}
+                size={18}
+                color={rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary}
               />
             </View>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1A1A1A', letterSpacing: -0.3 }}>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: theme.text, letterSpacing: -0.3 }}>
               PMP Smart
             </Text>
           </View>
 
+          {/* User Profile Chip (El selector de modo se gestiona en la pestaña Perfil) */}
           <TouchableOpacity
             onPress={() => router.push('/(tabs)/perfil')}
             activeOpacity={0.7}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: '#F0F0ED',
+              backgroundColor: theme.card,
               paddingHorizontal: 12,
               paddingVertical: 7,
               borderRadius: 20,
+              borderWidth: 1,
+              borderColor: theme.cardBorder,
             }}>
             <View
               style={{
                 width: 24,
                 height: 24,
                 borderRadius: 12,
-                backgroundColor: rolActivo === 'agricultor' ? '#C8E6C9' : '#BBDEFB',
+                backgroundColor: rolActivo === 'tecnico' ? (isDarkMode ? 'rgba(59, 130, 246, 0.25)' : '#DBEAFE') : theme.primaryLight,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 6,
               }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: rolActivo === 'agricultor' ? '#2E7D32' : '#1565C0' }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#1D4ED8') : theme.primary }}>
                 {nombre.charAt(0).toUpperCase()}
               </Text>
             </View>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#555' }}>{nombre}</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: theme.textSecondary }}>{nombre}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -195,22 +207,22 @@ export default function Inicio() {
         {rolActivo === 'agricultor' ? (
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             {/* Greeting */}
-            <Text style={{ fontSize: 22, fontWeight: '700', color: '#1A1A1A', marginBottom: 2, letterSpacing: -0.3 }}>
+            <Text style={{ fontSize: 24, fontWeight: '800', color: theme.text, marginBottom: 3, letterSpacing: -0.4 }}>
               {getSaludo()}, {nombre}
             </Text>
-            <Text style={{ fontSize: 13, color: '#888', marginBottom: 20, fontWeight: '400' }}>
-              Monitoreo fitosanitario de tus cultivos
+            <Text style={{ fontSize: 13, color: theme.textMuted, marginBottom: 20, fontWeight: '400' }}>
+              {t('subtituloInicio')}
             </Text>
 
             {/* Empty State */}
-            {(!cultivos || cultivos.length === 0) && (
+            {cultivos.length === 0 && (
               <View
                 style={{
-                  backgroundColor: '#fff',
+                  backgroundColor: theme.card,
                   borderRadius: 20,
                   padding: 24,
                   borderWidth: 1,
-                  borderColor: '#E8E8E4',
+                  borderColor: theme.cardBorder,
                   marginBottom: 20,
                 }}>
                 <View
@@ -218,164 +230,137 @@ export default function Inicio() {
                     width: 48,
                     height: 48,
                     borderRadius: 14,
-                    backgroundColor: '#F1F8E9',
+                    backgroundColor: theme.primaryLight,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginBottom: 14,
                   }}>
-                  <FontAwesome name="map-signs" size={20} color="#558B2F" />
+                  <Ionicons name="map" size={22} color={theme.primary} />
                 </View>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: '#1A1A1A', marginBottom: 6 }}>
-                  Registra tu primera parcela
+                <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginBottom: 6 }}>
+                  {t('sinParcelasTitulo')}
                 </Text>
-                <Text style={{ fontSize: 13, color: '#888', lineHeight: 19, marginBottom: 18 }}>
-                  Agrega los datos de tu cultivo para comenzar a monitorear con la cámara.
+                <Text style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 19, marginBottom: 18 }}>
+                  {t('sinParcelasDesc')}
                 </Text>
                 <TouchableOpacity
                   onPress={() => setModalNuevoLote(true)}
                   activeOpacity={0.85}
                   style={{
-                    backgroundColor: '#2E7D32',
+                    backgroundColor: theme.primary,
                     paddingVertical: 13,
                     borderRadius: 14,
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
-                  <FontAwesome name="plus" size={12} color="white" />
-                  <Text style={{ color: 'white', fontSize: 13, fontWeight: '600', marginLeft: 8 }}>
-                    Agregar parcela
+                  <Ionicons name="add" size={16} color="white" />
+                  <Text style={{ color: 'white', fontSize: 13, fontWeight: '600', marginLeft: 6 }}>
+                    {t('agregarParcelaBtn')}
                   </Text>
                 </TouchableOpacity>
               </View>
             )}
 
-            {/* Main CTA */}
+            {/* Main CTA: Analizar planta */}
             <Animated.View style={{ transform: [{ scale: btnScale }] }}>
               <TouchableOpacity
                 onPress={() => router.push('/camera')}
                 activeOpacity={0.9}
                 style={{
-                  backgroundColor: '#1B5E20',
-                  borderRadius: 20,
-                  padding: 24,
-                  marginBottom: 12,
+                  backgroundColor: theme.bannerBg,
+                  borderRadius: 22,
+                  padding: 22,
+                  marginBottom: 24,
+                  borderWidth: isDarkMode ? 1 : 0,
+                  borderColor: isDarkMode ? 'rgba(74, 222, 128, 0.3)' : 'transparent',
                 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View
                     style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 14,
-                      backgroundColor: 'rgba(255,255,255,0.15)',
+                      width: 50,
+                      height: 50,
+                      borderRadius: 15,
+                      backgroundColor: 'rgba(255,255,255,0.18)',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                    <FontAwesome name="camera" size={22} color="white" />
+                    <Ionicons name="camera" size={24} color="white" />
                   </View>
                   <View style={{ marginLeft: 14, flex: 1 }}>
-                    <Text style={{ color: 'white', fontSize: 17, fontWeight: '700', letterSpacing: -0.2 }}>
-                      Analizar planta
+                    <Text style={{ color: 'white', fontSize: 17, fontWeight: '800', letterSpacing: -0.2 }}>
+                      {t('analizarPlanta')}
                     </Text>
-                    <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 2 }}>
-                      Fotografía una hoja para detectar PMP
+                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 3 }}>
+                      {t('subtituloAnalizar')}
                     </Text>
                   </View>
-                  <FontAwesome name="arrow-right" size={14} color="rgba(255,255,255,0.5)" />
+                  <Ionicons name="arrow-forward" size={18} color="rgba(255,255,255,0.7)" />
                 </View>
               </TouchableOpacity>
             </Animated.View>
 
-            {/* Secondary Action */}
-            <TouchableOpacity
-              onPress={handleGenerarCodigo}
-              activeOpacity={0.85}
-              style={{
-                backgroundColor: '#fff',
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: '#E0E0DC',
-                padding: 16,
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginBottom: 24,
-              }}>
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 10,
-                  backgroundColor: '#E8F5E9',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: 12,
-                }}>
-                <FontAwesome name="share-alt" size={14} color="#388E3C" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: '#333' }}>Compartir con técnico</Text>
-                <Text style={{ fontSize: 11, color: '#999', marginTop: 1 }}>Genera un código de acceso</Text>
-              </View>
-              <FontAwesome name="chevron-right" size={11} color="#CCC" />
-            </TouchableOpacity>
-
-            {/* Reviewed Alert */}
+            {/* Reviewed Alert if any */}
             {casosRevisados.length > 0 && (
               <TouchableOpacity
                 onPress={() => router.push('/(tabs)/historial')}
                 activeOpacity={0.85}
                 style={{
-                  backgroundColor: '#F1F8E9',
+                  backgroundColor: theme.primaryLight,
                   borderRadius: 16,
                   padding: 16,
                   flexDirection: 'row',
                   alignItems: 'center',
                   marginBottom: 24,
+                  borderWidth: 1,
+                  borderColor: theme.primaryLightBorder,
                 }}>
                 <View
                   style={{
                     width: 36,
                     height: 36,
                     borderRadius: 18,
-                    backgroundColor: '#C8E6C9',
+                    backgroundColor: theme.primary,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginRight: 12,
                   }}>
-                  <FontAwesome name="check" size={14} color="#2E7D32" />
+                  <Ionicons name="checkmark" size={18} color="white" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#2E7D32' }}>
-                    Dictamen técnico disponible
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: theme.primary }}>
+                    {language === 'en' ? 'Agronomist report ready' : 'Dictamen técnico disponible'}
                   </Text>
-                  <Text style={{ fontSize: 11, color: '#558B2F', marginTop: 1 }}>
-                    Tienes recomendaciones de un agrónomo
+                  <Text style={{ fontSize: 11, color: theme.textSecondary, marginTop: 1 }}>
+                    {language === 'en' ? 'Review feedback on your scans' : 'Tienes recomendaciones de un agrónomo'}
                   </Text>
                 </View>
-                <FontAwesome name="chevron-right" size={11} color="#81C784" />
+                <Ionicons name="chevron-forward" size={14} color={theme.primary} />
               </TouchableOpacity>
             )}
 
-            {/* Stats */}
+            {/* Metrics Stats */}
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 28 }}>
               {[
-                { value: cultivos.length, label: 'Parcelas', color: '#1A1A1A' },
-                { value: analisisHistorial.length, label: 'Escaneos', color: '#2E7D32' },
-                { value: casosPendientes.length, label: 'En revisión', color: '#E65100' },
+                { value: cultivos.length, label: t('metricasParcelas'), color: theme.primary },
+                { value: analisisHistorial.length, label: t('metricasEscaneos'), color: theme.accent },
+                { value: casosPendientes.length, label: t('metricasEnRevision'), color: theme.warning },
               ].map((stat, i) => (
                 <View
                   key={i}
                   style={{
                     flex: 1,
-                    backgroundColor: '#fff',
+                    backgroundColor: theme.card,
                     padding: 16,
                     borderRadius: 16,
                     borderWidth: 1,
-                    borderColor: '#F0F0ED',
+                    borderColor: theme.cardBorder,
                     alignItems: 'center',
                   }}>
-                  <Text style={{ fontSize: 20, fontWeight: '700', color: stat.color }}>{stat.value}</Text>
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: '#AAA', marginTop: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{stat.label}</Text>
+                  <Text style={{ fontSize: 22, fontWeight: '800', color: stat.color }}>{stat.value}</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textMuted, marginTop: 4, letterSpacing: 0.5 }}>
+                    {stat.label}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -384,11 +369,13 @@ export default function Inicio() {
             {cultivos.length > 0 && (
               <View style={{ marginBottom: 24 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1A1A' }}>
-                    Tus parcelas
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: theme.text }}>
+                    {t('tusParcelas')}
                   </Text>
                   <TouchableOpacity onPress={() => router.push('/(tabs)/cultivos')}>
-                    <Text style={{ fontSize: 12, color: '#888', fontWeight: '500' }}>Ver todas →</Text>
+                    <Text style={{ fontSize: 12, color: theme.primary, fontWeight: '600' }}>
+                      {t('verTodas')}
+                    </Text>
                   </TouchableOpacity>
                 </View>
 
@@ -401,13 +388,13 @@ export default function Inicio() {
                     }}
                     activeOpacity={0.85}
                     style={{
-                      backgroundColor: '#fff',
+                      backgroundColor: theme.card,
                       borderRadius: 16,
                       padding: 14,
                       flexDirection: 'row',
                       alignItems: 'center',
                       borderWidth: 1,
-                      borderColor: '#F0F0ED',
+                      borderColor: theme.cardBorder,
                       marginBottom: 10,
                     }}>
                     <View
@@ -415,31 +402,33 @@ export default function Inicio() {
                         width: 42,
                         height: 42,
                         borderRadius: 12,
-                        backgroundColor: cultivo.estadoFitosanitario === 'alerta' ? '#FFF3E0' : '#F1F8E9',
+                        backgroundColor: cultivo.estadoFitosanitario === 'alerta' ? theme.warningBg : theme.primaryLight,
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginRight: 12,
                       }}>
-                      <FontAwesome
+                      <Ionicons
                         name="leaf"
-                        size={16}
-                        color={cultivo.estadoFitosanitario === 'alerta' ? '#E65100' : '#558B2F'}
+                        size={18}
+                        color={cultivo.estadoFitosanitario === 'alerta' ? theme.warning : theme.primary}
                       />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>{cultivo.nombre}</Text>
-                      <Text style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
-                        {cultivo.variedad} · {cultivo.hectareas} ha
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>{cultivo.nombre}</Text>
+                      <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
+                        {cultivo.variedad} · {cultivo.hectareas} {t('ha')}{cultivo.codigoAcceso ? ` · Cód: ${cultivo.codigoAcceso}` : ''}
                       </Text>
                     </View>
                     <View
                       style={{
-                        backgroundColor: '#F5F5F2',
-                        paddingHorizontal: 10,
-                        paddingVertical: 5,
-                        borderRadius: 8,
+                        backgroundColor: theme.primaryLight,
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 10,
                       }}>
-                      <Text style={{ fontSize: 10, fontWeight: '600', color: '#666' }}>Escanear</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: theme.primary }}>
+                        {t('escanear')}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -450,11 +439,13 @@ export default function Inicio() {
             {analisisHistorial.length > 0 && (
               <View style={{ marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1A1A' }}>
-                    Análisis recientes
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: theme.text }}>
+                    {t('analisisRecientes')}
                   </Text>
                   <TouchableOpacity onPress={() => router.push('/(tabs)/historial')}>
-                    <Text style={{ fontSize: 12, color: '#888', fontWeight: '500' }}>Ver todos →</Text>
+                    <Text style={{ fontSize: 12, color: theme.primary, fontWeight: '600' }}>
+                      {t('verTodas')}
+                    </Text>
                   </TouchableOpacity>
                 </View>
 
@@ -464,18 +455,18 @@ export default function Inicio() {
                     onPress={() => router.push('/(tabs)/historial')}
                     activeOpacity={0.85}
                     style={{
-                      backgroundColor: '#fff',
+                      backgroundColor: theme.card,
                       borderRadius: 16,
                       padding: 12,
                       flexDirection: 'row',
                       alignItems: 'center',
                       borderWidth: 1,
-                      borderColor: '#F0F0ED',
+                      borderColor: theme.cardBorder,
                       marginBottom: 10,
                     }}>
                     <Image
                       source={{ uri: item.imageUri || 'https://images.unsplash.com/photo-1555431189-0ab279e2be3a' }}
-                      style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#F0F0ED' }}
+                      style={{ width: 46, height: 46, borderRadius: 12, backgroundColor: theme.cardBorder }}
                       resizeMode="cover"
                     />
                     <View style={{ flex: 1, marginLeft: 12 }}>
@@ -483,24 +474,28 @@ export default function Inicio() {
                         <Text
                           style={{
                             fontSize: 13,
-                            fontWeight: '600',
-                            color: item.estado === 'alerta' ? '#E65100' : '#2E7D32',
+                            fontWeight: '700',
+                            color: item.estado === 'alerta' ? theme.warning : theme.primary,
                           }}>
-                          {item.diagnostico || 'Diagnóstico'}
+                          {item.diagnostico || (language === 'en' ? 'Diagnosis' : 'Diagnóstico')}
                         </Text>
                         {item.estadoRevision === 'revisado' && (
-                          <View style={{ backgroundColor: '#E8F5E9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: '#2E7D32' }}>Revisado</Text>
+                          <View style={{ backgroundColor: theme.primaryLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                            <Text style={{ fontSize: 9, fontWeight: '700', color: theme.primary }}>
+                              {t('estadoRevisado')}
+                            </Text>
                           </View>
                         )}
                         {item.estadoRevision === 'pendiente' && (
-                          <View style={{ backgroundColor: '#FFF3E0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: '#E65100' }}>Pendiente</Text>
+                          <View style={{ backgroundColor: theme.warningBg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                            <Text style={{ fontSize: 9, fontWeight: '700', color: theme.warning }}>
+                              {t('estadoPendiente')}
+                            </Text>
                           </View>
                         )}
                       </View>
-                      <Text style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
-                        {item.cultivoNombre || 'Parcela'} · {item.fecha || ''}
+                      <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
+                        {item.cultivoNombre || (language === 'en' ? 'Plot' : 'Parcela')} · {item.fecha || ''}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -514,67 +509,69 @@ export default function Inicio() {
             {/* Tech Panel */}
             <View
               style={{
-                backgroundColor: '#EFF6FF',
+                backgroundColor: isDarkMode ? '#1E293B' : '#EFF6FF',
                 borderRadius: 16,
                 padding: 18,
                 marginBottom: 20,
                 borderWidth: 1,
-                borderColor: '#DBEAFE',
+                borderColor: isDarkMode ? '#334155' : '#DBEAFE',
               }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#1565C0', marginBottom: 4 }}>
-                Panel técnico agronómico
+              <Text style={{ fontSize: 15, fontWeight: '800', color: '#3B82F6', marginBottom: 4 }}>
+                {language === 'en' ? 'Agronomist Technician Panel' : 'Panel técnico agronómico'}
               </Text>
-              <Text style={{ fontSize: 12, color: '#64748B' }}>
-                {perfilTecnico?.nombre || 'Ing. Agrónomo'} · {perfilTecnico?.registroProfesional || 'Reg. Profesional'}
+              <Text style={{ fontSize: 12, color: theme.textSecondary }}>
+                {perfilTecnico?.nombre || (language === 'en' ? 'Agronomist' : 'Ing. Agrónomo')} · {perfilTecnico?.registroProfesional || 'Reg. Profesional'}
               </Text>
             </View>
 
             {/* Tech Stats */}
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
               {[
-                { value: casosPendientes.length, label: 'Por revisar', color: '#E65100', bg: '#FFF3E0' },
-                { value: casosRevisados.length, label: 'Auditados', color: '#2E7D32', bg: '#E8F5E9' },
-                { value: cultivos.length, label: 'Parcelas', color: '#1565C0', bg: '#E3F2FD' },
+                { value: casosPendientes.length, label: language === 'en' ? 'To Review' : 'Por revisar', color: theme.warning },
+                { value: casosRevisados.length, label: language === 'en' ? 'Audited' : 'Auditados', color: isDarkMode ? '#60A5FA' : '#2563EB' },
+                { value: cultivos.length, label: t('metricasParcelas'), color: '#3B82F6' },
               ].map((stat, i) => (
                 <View
                   key={i}
                   style={{
                     flex: 1,
-                    backgroundColor: '#fff',
+                    backgroundColor: theme.card,
                     padding: 16,
                     borderRadius: 16,
                     borderWidth: 1,
-                    borderColor: '#F0F0ED',
+                    borderColor: theme.cardBorder,
                     alignItems: 'center',
                   }}>
-                  <Text style={{ fontSize: 22, fontWeight: '700', color: stat.color }}>{stat.value}</Text>
-                  <Text style={{ fontSize: 9, fontWeight: '600', color: '#AAA', marginTop: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{stat.label}</Text>
+                  <Text style={{ fontSize: 22, fontWeight: '800', color: stat.color }}>{stat.value}</Text>
+                  <Text style={{ fontSize: 9, fontWeight: '700', color: theme.textMuted, marginTop: 4, letterSpacing: 0.5 }}>
+                    {stat.label}
+                  </Text>
                 </View>
               ))}
             </View>
 
             {/* Pending Cases */}
             <View style={{ marginBottom: 20 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1A1A', marginBottom: 14 }}>
-                Casos pendientes ({casosPendientes.length})
+              <Text style={{ fontSize: 15, fontWeight: '800', color: theme.text, marginBottom: 14 }}>
+                {language === 'en' ? `Pending cases (${casosPendientes.length})` : `Casos pendientes (${casosPendientes.length})`}
               </Text>
 
               {casosPendientes.length === 0 ? (
                 <View
                   style={{
-                    backgroundColor: '#fff',
+                    backgroundColor: theme.card,
                     borderRadius: 16,
                     padding: 32,
                     alignItems: 'center',
                     borderWidth: 1,
-                    borderColor: '#F0F0ED',
+                    borderColor: theme.cardBorder,
                   }}>
-                  <FontAwesome name="check-circle" size={28} color="#C8E6C9" />
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#555', marginTop: 10 }}>
-                    Sin revisiones pendientes
+                  <Ionicons name="checkmark-circle" size={32} color={isDarkMode ? '#60A5FA' : '#2563EB'} />
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text, marginTop: 10 }}>
+                    {language === 'en' ? 'No pending reviews' : 'Sin revisiones pendientes'}
                   </Text>
-                  <Text style={{ fontSize: 11, color: '#AAA', textAlign: 'center', marginTop: 4 }}>
-                    Los casos nuevos aparecerán aquí
+                  <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginTop: 4 }}>
+                    {language === 'en' ? 'New farmer submissions will appear here' : 'Los casos nuevos aparecerán aquí'}
                   </Text>
                 </View>
               ) : (
@@ -584,40 +581,40 @@ export default function Inicio() {
                     onPress={() => router.push('/(tabs)/historial')}
                     activeOpacity={0.85}
                     style={{
-                      backgroundColor: '#FFFBF5',
+                      backgroundColor: theme.card,
                       borderRadius: 16,
                       padding: 14,
                       marginBottom: 10,
                       borderWidth: 1,
-                      borderColor: '#FDE68A',
+                      borderColor: theme.cardBorder,
                     }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <Image
                         source={{ uri: item.imageUri || 'https://images.unsplash.com/photo-1555431189-0ab279e2be3a' }}
-                        style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: '#F0F0ED' }}
+                        style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: theme.cardBorder }}
                         resizeMode="cover"
                       />
                       <View style={{ flex: 1, marginLeft: 12 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#E65100' }}>
-                          {item.diagnostico || 'Posible PMP'}
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: theme.warning }}>
+                          {item.diagnostico || (language === 'en' ? 'Possible PMP' : 'Posible PMP')}
                         </Text>
-                        <Text style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
-                          {item.cultivoNombre || 'Parcela'} · {item.confianza || 90}% IA
+                        <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
+                          {item.cultivoNombre || (language === 'en' ? 'Plot' : 'Parcela')} · {item.confianza || 90}% IA
                         </Text>
                       </View>
-                      <FontAwesome name="chevron-right" size={11} color="#CCC" />
+                      <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
                     </View>
                   </TouchableOpacity>
                 ))
               )}
             </View>
 
-            {/* Actions */}
+            {/* Actions (Azul armónico para rol técnico) */}
             <TouchableOpacity
               onPress={() => router.push('/(tabs)/historial')}
               activeOpacity={0.85}
               style={{
-                backgroundColor: '#1565C0',
+                backgroundColor: isDarkMode ? '#2563EB' : '#1D4ED8',
                 paddingVertical: 14,
                 borderRadius: 14,
                 flexDirection: 'row',
@@ -625,9 +622,9 @@ export default function Inicio() {
                 justifyContent: 'center',
                 marginBottom: 10,
               }}>
-              <FontAwesome name="clipboard" size={13} color="white" />
-              <Text style={{ color: 'white', fontSize: 13, fontWeight: '600', marginLeft: 8 }}>
-                Ver historial completo
+              <Ionicons name="clipboard" size={16} color="white" />
+              <Text style={{ color: 'white', fontSize: 13, fontWeight: '700', marginLeft: 8 }}>
+                {language === 'en' ? 'View Full History' : 'Ver historial completo'}
               </Text>
             </TouchableOpacity>
 
@@ -635,9 +632,9 @@ export default function Inicio() {
               onPress={() => setModalVincular(true)}
               activeOpacity={0.85}
               style={{
-                backgroundColor: '#fff',
+                backgroundColor: theme.card,
                 borderWidth: 1,
-                borderColor: '#DBEAFE',
+                borderColor: isDarkMode ? 'rgba(59, 130, 246, 0.4)' : '#DBEAFE',
                 paddingVertical: 14,
                 borderRadius: 14,
                 flexDirection: 'row',
@@ -645,9 +642,9 @@ export default function Inicio() {
                 justifyContent: 'center',
                 marginBottom: 24,
               }}>
-              <FontAwesome name="user-plus" size={13} color="#1565C0" />
-              <Text style={{ color: '#1565C0', fontSize: 13, fontWeight: '600', marginLeft: 8 }}>
-                Vincular agricultor
+              <Ionicons name="key-outline" size={16} color={isDarkMode ? '#60A5FA' : '#2563EB'} />
+              <Text style={{ color: isDarkMode ? '#60A5FA' : '#2563EB', fontSize: 13, fontWeight: '700', marginLeft: 8 }}>
+                {language === 'en' ? 'Link Plot by Code' : 'Vincular parcela por código'}
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -656,57 +653,103 @@ export default function Inicio() {
 
       {/* MODAL: Nueva Parcela */}
       <Modal visible={modalNuevoLote} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#1A1A1A' }}>Nueva parcela</Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: theme.text }}>
+                {t('nuevaParcela')}
+              </Text>
               <TouchableOpacity onPress={() => setModalNuevoLote(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <FontAwesome name="times" size={16} color="#AAA" />
+                <Ionicons name="close" size={22} color={theme.textMuted} />
               </TouchableOpacity>
             </View>
 
             <View style={{ marginBottom: 14 }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: '#888', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Nombre</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6, letterSpacing: 0.5 }}>
+                {language === 'en' ? 'NAME' : 'NOMBRE'}
+              </Text>
               <TextInput
                 value={nombreLote}
                 onChangeText={setNombreLote}
-                placeholder="Ej: Lote El Mirador"
-                placeholderTextColor="#CCC"
-                style={{ backgroundColor: '#F8F8F5', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: '#333', borderWidth: 1, borderColor: '#EEEEE8' }}
+                placeholder={t('nombreParcelaPlaceholder')}
+                placeholderTextColor={theme.textMuted}
+                style={{
+                  backgroundColor: theme.inputBg,
+                  borderRadius: 12,
+                  paddingHorizontal: 14,
+                  paddingVertical: 12,
+                  fontSize: 14,
+                  color: theme.text,
+                  borderWidth: 1,
+                  borderColor: theme.inputBorder,
+                }}
               />
             </View>
 
             <View style={{ marginBottom: 14 }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: '#888', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Variedad</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6, letterSpacing: 0.5 }}>
+                {language === 'en' ? 'VARIETY' : 'VARIEDAD'}
+              </Text>
               <TextInput
                 value={variedadLote}
                 onChangeText={setVariedadLote}
-                placeholder="Ej: Pastusa Suprema"
-                placeholderTextColor="#CCC"
-                style={{ backgroundColor: '#F8F8F5', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: '#333', borderWidth: 1, borderColor: '#EEEEE8' }}
+                placeholder={t('variedadPlaceholder')}
+                placeholderTextColor={theme.textMuted}
+                style={{
+                  backgroundColor: theme.inputBg,
+                  borderRadius: 12,
+                  paddingHorizontal: 14,
+                  paddingVertical: 12,
+                  fontSize: 14,
+                  color: theme.text,
+                  borderWidth: 1,
+                  borderColor: theme.inputBorder,
+                }}
               />
             </View>
 
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, fontWeight: '600', color: '#888', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Hectáreas</Text>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6, letterSpacing: 0.5 }}>
+                  {language === 'en' ? 'HECTARES' : 'HECTÁREAS'}
+                </Text>
                 <TextInput
                   value={hectareasLote}
                   onChangeText={setHectareasLote}
                   placeholder="2.0"
                   keyboardType="decimal-pad"
-                  placeholderTextColor="#CCC"
-                  style={{ backgroundColor: '#F8F8F5', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: '#333', borderWidth: 1, borderColor: '#EEEEE8' }}
+                  placeholderTextColor={theme.textMuted}
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    fontSize: 14,
+                    color: theme.text,
+                    borderWidth: 1,
+                    borderColor: theme.inputBorder,
+                  }}
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, fontWeight: '600', color: '#888', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ubicación</Text>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6, letterSpacing: 0.5 }}>
+                  {language === 'en' ? 'LOCATION' : 'UBICACIÓN'}
+                </Text>
                 <TextInput
                   value={ubicacionLote}
                   onChangeText={setUbicacionLote}
-                  placeholder="Pasto, Nariño"
-                  placeholderTextColor="#CCC"
-                  style={{ backgroundColor: '#F8F8F5', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: '#333', borderWidth: 1, borderColor: '#EEEEE8' }}
+                  placeholder={t('ubicacionPlaceholder')}
+                  placeholderTextColor={theme.textMuted}
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    fontSize: 14,
+                    color: theme.text,
+                    borderWidth: 1,
+                    borderColor: theme.inputBorder,
+                  }}
                 />
               </View>
             </View>
@@ -714,53 +757,66 @@ export default function Inicio() {
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity
                 onPress={() => setModalNuevoLote(false)}
-                style={{ flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: '#E0E0DC', alignItems: 'center' }}>
-                <Text style={{ color: '#888', fontWeight: '600', fontSize: 14 }}>Cancelar</Text>
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: theme.cardBorder,
+                  alignItems: 'center',
+                }}>
+                <Text style={{ color: theme.textSecondary, fontWeight: '700', fontSize: 14 }}>
+                  {t('cancelar')}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleCrearPrimerLote}
-                style={{ flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: '#2E7D32', alignItems: 'center' }}>
-                <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>Guardar</Text>
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 14,
+                  backgroundColor: theme.primary,
+                  alignItems: 'center',
+                }}>
+                <Text style={{ color: 'white', fontWeight: '700', fontSize: 14 }}>
+                  {t('guardar')}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* MODAL: Código */}
-      <Modal visible={modalCodigo} animationType="fade" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 20, width: '100%', padding: 28, alignItems: 'center' }}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: '#1A1A1A', marginBottom: 8 }}>Código de acceso</Text>
-            <Text style={{ fontSize: 12, color: '#888', textAlign: 'center', marginBottom: 20 }}>
-              Comparte este código con tu técnico agrónomo
-            </Text>
-            <View style={{ backgroundColor: '#F8F8F5', paddingHorizontal: 24, paddingVertical: 16, borderRadius: 14, width: '100%', marginBottom: 24, borderWidth: 1, borderColor: '#EEEEE8' }}>
-              <Text style={{ fontSize: 28, fontWeight: '700', textAlign: 'center', letterSpacing: 6, color: '#2E7D32' }}>
-                {codigoGenerado}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => setModalCodigo(false)}
-              style={{ backgroundColor: '#2E7D32', width: '100%', paddingVertical: 14, borderRadius: 14, alignItems: 'center' }}>
-              <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>Cerrar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL: Vincular */}
+      {/* MODAL: Vincular Parcela (Técnico) */}
       <Modal visible={modalVincular} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 28 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 28 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#1565C0' }}>Vincular agricultor</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 12,
+                    backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : '#DBEAFE',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 10,
+                  }}>
+                  <Ionicons name="key-outline" size={18} color={isDarkMode ? '#60A5FA' : '#2563EB'} />
+                </View>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: theme.text }}>
+                  {language === 'en' ? 'Link Plot by Code' : 'Vincular parcela por código'}
+                </Text>
+              </View>
               <TouchableOpacity onPress={() => setModalVincular(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <FontAwesome name="times" size={16} color="#AAA" />
+                <Ionicons name="close" size={22} color={theme.textMuted} />
               </TouchableOpacity>
             </View>
-            <Text style={{ fontSize: 13, color: '#888', marginBottom: 18 }}>
-              Ingresa el código de 6 caracteres proporcionado por el agricultor.
+            <Text style={{ fontSize: 13, color: theme.textSecondary, marginBottom: 18, lineHeight: 18 }}>
+              {language === 'en'
+                ? 'Enter the 6-character access code provided by the potato farmer to monitor this specific plot.'
+                : 'Ingresa el código único de 6 caracteres proporcionado por el agricultor para auditar únicamente esta parcela.'}
             </Text>
             <TextInput
               value={codigoInput}
@@ -768,26 +824,34 @@ export default function Inicio() {
               placeholder="A7B9X2"
               autoCapitalize="characters"
               maxLength={6}
-              placeholderTextColor="#CCC"
+              placeholderTextColor={theme.textMuted}
               style={{
-                backgroundColor: '#F8F8F5',
+                backgroundColor: theme.inputBg,
                 borderRadius: 14,
                 paddingHorizontal: 16,
                 paddingVertical: 14,
-                fontSize: 20,
-                fontWeight: '700',
+                fontSize: 24,
+                fontWeight: '800',
                 textAlign: 'center',
                 letterSpacing: 8,
-                color: '#1565C0',
+                color: isDarkMode ? '#60A5FA' : '#2563EB',
                 marginBottom: 20,
                 borderWidth: 1,
-                borderColor: '#EEEEE8',
+                borderColor: theme.inputBorder,
               }}
             />
             <TouchableOpacity
               onPress={handleVincular}
-              style={{ backgroundColor: '#1565C0', width: '100%', paddingVertical: 14, borderRadius: 14, alignItems: 'center' }}>
-              <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>Verificar código</Text>
+              style={{
+                backgroundColor: isDarkMode ? '#2563EB' : '#1D4ED8',
+                width: '100%',
+                paddingVertical: 14,
+                borderRadius: 14,
+                alignItems: 'center',
+              }}>
+              <Text style={{ color: 'white', fontWeight: '700', fontSize: 14 }}>
+                {language === 'en' ? 'Link Plot' : 'Vincular parcela'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

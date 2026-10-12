@@ -16,6 +16,7 @@ export interface Cultivo {
   estadoFitosanitario: 'optimo' | 'observacion' | 'alerta';
   analisisCount: number;
   ultimaRevision: string;
+  codigoAcceso?: string;
 }
 
 export interface CreateCultivoDTO {
@@ -25,6 +26,7 @@ export interface CreateCultivoDTO {
   ubicacion: string;
   fechaSiembra: string;
   estadoFitosanitario?: 'optimo' | 'observacion' | 'alerta';
+  codigoAcceso?: string;
 }
 
 export interface UpdateCultivoDTO {
@@ -36,6 +38,7 @@ export interface UpdateCultivoDTO {
   estadoFitosanitario?: 'optimo' | 'observacion' | 'alerta';
   analisisCount?: number;
   ultimaRevision?: string;
+  codigoAcceso?: string;
 }
 
 // ---- Análisis ----

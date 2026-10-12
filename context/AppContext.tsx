@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   perfilApi,
   cultivosApi,
   analisisApi,
   revisionesApi,
+  vinculosApi,
+  generarCodigoParcela,
   getAccessToken,
   authEvents,
 } from '../lib/api';
@@ -18,6 +20,9 @@ import type {
   CreateRevisionDTO,
 } from '../lib/types';
 
+import { lightTheme, darkTheme, getAppTheme, ThemeColors } from '../lib/theme';
+import { translations, TranslationKey, Language } from '../lib/i18n';
+
 // Re-exportar tipos para que los componentes los importen desde aquí
 export type {
   RolUsuario,
@@ -26,6 +31,9 @@ export type {
   RevisionTecnica,
   PerfilAgricultor,
   PerfilTecnico,
+  ThemeColors,
+  Language,
+  TranslationKey,
 };
 
 interface AppContextType {
@@ -51,6 +59,16 @@ interface AppContextType {
   isLoading: boolean;
   currentImageB64: string | null;
   setCurrentImageB64: (b64: string | null) => void;
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  toggleLanguage: () => void;
+  theme: ThemeColors;
+  t: (key: TranslationKey, params?: Record<string, string>) => string;
+  codigosVinculadosTecnico: string[];
+  vincularParcelaPorCodigo: (codigo: string) => Promise<any>;
+  desvincularParcela: (codigo: string) => Promise<void>;
 }
 
 // Claves para caché local (respaldo offline)
@@ -60,6 +78,8 @@ const CACHE_KEYS = {
   HISTORIAL: '@pmp_smart_historial_v4',
   PERFIL_AGRICULTOR: '@pmp_smart_perfil_agr_v4',
   PERFIL_TECNICO: '@pmp_smart_perfil_tec_v4',
+  THEME_MODE: '@pmp_smart_dark_mode_v1',
+  LANGUAGE: '@pmp_smart_language_v1',
 };
 
 const DEFAULT_PERFIL_AGRICULTOR: PerfilAgricultor = {
@@ -88,12 +108,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [rolActivo, setRolActivoState] = useState<RolUsuario>('agricultor');
   const [cultivos, setCultivos] = useState<Cultivo[]>([]);
   const [analisisHistorial, setAnalisisHistorial] = useState<Analisis[]>([]);
+  const [codigosVinculadosTecnico, setCodigosVinculadosTecnico] = useState<string[]>([]);
   const [perfilAgricultor, setPerfilAgricultor] = useState<PerfilAgricultor>(DEFAULT_PERFIL_AGRICULTOR);
   const [perfilTecnico, setPerfilTecnico] = useState<PerfilTecnico>(DEFAULT_PERFIL_TECNICO);
   const [selectedCultivoId, setSelectedCultivoId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
 
   const [currentImageB64, setCurrentImageB64] = useState<string | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [language, setLanguageState] = useState<Language>('es');
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    AsyncStorage.setItem(CACHE_KEYS.LANGUAGE, lang).catch(() => {});
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      AsyncStorage.setItem(CACHE_KEYS.THEME_MODE, next ? 'dark' : 'light').catch(() => {});
+      return next;
+    });
+  };
+
+  const toggleLanguage = () => {
+    const nextLang = language === 'es' ? 'en' : 'es';
+    setLanguage(nextLang);
+  };
+
+  const theme: ThemeColors = getAppTheme(isDarkMode, rolActivo);
+
+  const t = (key: TranslationKey, params?: Record<string, string>): string => {
+    const dict = translations[language] || translations.es;
+    let text = dict[key] || translations.es[key] || String(key);
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+      });
+    }
+    return text;
+  };
 
   // ==========================================
   // Cargar datos al iniciar
@@ -184,6 +238,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setAnalisisHistorial(analisisRes.data);
         await AsyncStorage.setItem(CACHE_KEYS.HISTORIAL, JSON.stringify(analisisRes.data));
       }
+
+      // Códigos de parcelas vinculadas por el técnico
+      const codigos = await vinculosApi.getCodigosVinculados();
+      setCodigosVinculadosTecnico(codigos);
     } catch (e) {
       console.warn('Error al cargar datos desde la API, intentando caché local:', e);
       await loadFromCache();
@@ -233,6 +291,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setPerfilTecnico({ ...DEFAULT_PERFIL_TECNICO, ...parsedTec });
         }
       }
+
+      const storedTheme = await AsyncStorage.getItem(CACHE_KEYS.THEME_MODE);
+      const storedLang = await AsyncStorage.getItem(CACHE_KEYS.LANGUAGE);
+      if (storedTheme === 'dark') {
+        setIsDarkMode(true);
+      }
+      if (storedLang === 'es' || storedLang === 'en') {
+        setLanguageState(storedLang as Language);
+      }
+
+      const codigos = await vinculosApi.getCodigosVinculados();
+      setCodigosVinculadosTecnico(codigos);
     } catch (e) {
       console.warn('Error al cargar datos desde caché local:', e);
     }
@@ -262,11 +332,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ==========================================
 
   const addCultivo = (cultivoData: Omit<Cultivo, 'id' | 'analisisCount' | 'ultimaRevision'>) => {
-    // Crear localmente con ID temporal para respuesta inmediata
+    // Crear localmente con ID temporal y código único para respuesta inmediata
     const tempId = `c-${Date.now()}`;
+    const codigoAcceso = cultivoData.codigoAcceso || generarCodigoParcela();
     const nuevo: Cultivo = {
       ...cultivoData,
       id: tempId,
+      codigoAcceso,
       analisisCount: 0,
       ultimaRevision: 'Recién registrado',
     };
@@ -284,10 +356,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ubicacion: cultivoData.ubicacion,
         fechaSiembra: cultivoData.fechaSiembra,
         estadoFitosanitario: cultivoData.estadoFitosanitario,
+        codigoAcceso,
       })
       .then((res) => {
         if (res.success && res.data) {
-          // Reemplazar ID temporal por el UUID real
           setCultivos((prev) => {
             const withRealId = prev.map((c) =>
               c.id === tempId ? res.data! : c
@@ -523,6 +595,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         estadoFitosanitario: 'alerta',
         analisisCount: 1,
         ultimaRevision: 'Hoy',
+        codigoAcceso: 'PMP-842',
       },
       {
         id: 'demo-c-2',
@@ -534,6 +607,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         estadoFitosanitario: 'optimo',
         analisisCount: 1,
         ultimaRevision: 'Ayer',
+        codigoAcceso: 'ESM-193',
       },
     ];
 
@@ -629,13 +703,64 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return `${dia} ${mes} ${anio} - ${hora12}:${minutos} ${ampm}`;
   };
 
+  const vincularParcelaPorCodigo = async (codigo: string) => {
+    const res = await vinculosApi.vincular(codigo);
+    if (res.success) {
+      const actualizados = await vinculosApi.getCodigosVinculados();
+      setCodigosVinculadosTecnico(actualizados);
+      // Asegurar que cultivos y análisis estén actualizados en memoria
+      const cRes = await cultivosApi.list();
+      if (cRes.success && cRes.data) {
+        setCultivos(cRes.data);
+      }
+      const aRes = await analisisApi.list();
+      if (aRes.success && aRes.data) {
+        setAnalisisHistorial(aRes.data);
+      }
+    }
+    return res;
+  };
+
+  const desvincularParcela = async (codigo: string) => {
+    await vinculosApi.desvincular(codigo);
+    const actualizados = await vinculosApi.getCodigosVinculados();
+    setCodigosVinculadosTecnico(actualizados);
+  };
+
+  // Filtrado según el rol:
+  // Agricultor: ve todas sus parcelas y análisis
+  // Técnico: ve ÚNICAMENTE las parcelas vinculadas con código y sus análisis
+  const cultivosVisibles = useMemo(() => {
+    if (rolActivo === 'tecnico') {
+      return cultivos.filter((c) =>
+        codigosVinculadosTecnico.includes((c.codigoAcceso || '').toUpperCase())
+      );
+    }
+    return cultivos;
+  }, [rolActivo, cultivos, codigosVinculadosTecnico]);
+
+  const analisisVisibles = useMemo(() => {
+    if (rolActivo === 'tecnico') {
+      const idsVinculadas = new Set(cultivosVisibles.map((c) => c.id));
+      const nombresVinculadas = new Set(
+        cultivosVisibles.map((c) => (c.nombre || '').toLowerCase().trim())
+      );
+      return analisisHistorial.filter(
+        (a) =>
+          idsVinculadas.has(a.cultivoId) ||
+          (a.cultivoNombre && nombresVinculadas.has(a.cultivoNombre.toLowerCase().trim()))
+      );
+    }
+    return analisisHistorial;
+  }, [rolActivo, analisisHistorial, cultivosVisibles]);
+
   return (
     <AppContext.Provider
       value={{
         rolActivo,
         setRolActivo,
-        cultivos,
-        analisisHistorial,
+        cultivos: cultivosVisibles,
+        analisisHistorial: analisisVisibles,
         perfilAgricultor,
         perfilTecnico,
         selectedCultivoId,
@@ -654,6 +779,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         currentImageB64,
         setCurrentImageB64,
+        isDarkMode,
+        toggleDarkMode,
+        language,
+        setLanguage,
+        toggleLanguage,
+        theme,
+        t,
+        codigosVinculadosTecnico,
+        vincularParcelaPorCodigo,
+        desvincularParcela,
       }}>
       {children}
     </AppContext.Provider>

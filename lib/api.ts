@@ -38,7 +38,8 @@ export type {
 // ============================================================
 // Configuración
 // ============================================================
-const API_BASE_URL = 'http://192.168.1.11:3001';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 
 // Constantes de AsyncStorage
 const TOKEN_KEY = '@pmp_smart_access_token';
@@ -46,6 +47,7 @@ const PERFIL_KEY = '@pmp_smart_perfil';
 const CULTIVOS_KEY = '@pmp_smart_cultivos';
 const ANALISIS_KEY = '@pmp_smart_analisis';
 const USERS_KEY = '@pmp_smart_users';
+const PARCELAS_VINCULADAS_KEY = '@pmp_smart_parcelas_vinculadas_tecnico';
 
 export async function getAccessToken(): Promise<string | null> {
   return AsyncStorage.getItem(TOKEN_KEY);
@@ -53,6 +55,16 @@ export async function getAccessToken(): Promise<string | null> {
 
 // Generador de IDs locales
 const generateId = () => Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+
+// Generador de código único de 6 caracteres para parcelas (ej: A7B9X2)
+export function generarCodigoParcela(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
 
 // Formatear fecha (similar al backend anterior)
 function formatearFecha(): string {
@@ -304,7 +316,18 @@ export const perfilApi = {
 
 export const cultivosApi = {
   async list(): Promise<ApiResponse<Cultivo[]>> {
-    const cultivos = await getLocalData<Cultivo[]>(CULTIVOS_KEY, []);
+    let cultivos = await getLocalData<Cultivo[]>(CULTIVOS_KEY, []);
+    let modified = false;
+    cultivos = cultivos.map(c => {
+      if (!c.codigoAcceso) {
+        modified = true;
+        return { ...c, codigoAcceso: generarCodigoParcela() };
+      }
+      return c;
+    });
+    if (modified) {
+      await saveLocalData(CULTIVOS_KEY, cultivos);
+    }
     return { success: true, data: cultivos };
   },
 
@@ -313,6 +336,7 @@ export const cultivosApi = {
     const newCultivo: Cultivo = {
       ...data,
       id: generateId(),
+      codigoAcceso: data.codigoAcceso || generarCodigoParcela(),
       estadoFitosanitario: data.estadoFitosanitario || 'optimo',
       analisisCount: 0,
       ultimaRevision: 'Nunca',
@@ -345,14 +369,17 @@ export const cultivosApi = {
 // ============================================================
 
 export const analisisApi = {
-  // Procesar imagen usando IA en el backend (esto se mantiene llamando a la API)
-  async procesar(imageUri: string): Promise<ApiResponse<any>> {
+  // Procesar imagen directamente con Gemini AI (sin depender de un backend o servidor)
+  async procesar(imageUri: string, language: 'es' | 'en' = 'es'): Promise<ApiResponse<any>> {
     try {
       const cleanUri = decodeURIComponent(imageUri);
       let base64 = '';
+      let mimeType = 'image/jpeg';
 
       if (cleanUri.startsWith('data:image')) {
-        base64 = cleanUri.split(',')[1];
+        const parts = cleanUri.split(';base64,');
+        mimeType = parts[0].replace('data:', '') || 'image/jpeg';
+        base64 = parts[1];
       } else if (cleanUri.startsWith('http')) {
         const response = await fetch(cleanUri);
         const blob = await response.blob();
@@ -360,7 +387,12 @@ export const analisisApi = {
           const reader = new FileReader();
           reader.onloadend = () => {
             if (typeof reader.result === 'string') {
-              resolve(reader.result.split(',')[1]);
+              const res = reader.result;
+              if (res.includes(';base64,')) {
+                resolve(res.split(';base64,')[1]);
+              } else {
+                resolve(res);
+              }
             } else {
               reject(new Error('FileReader no retornó string'));
             }
@@ -372,15 +404,102 @@ export const analisisApi = {
         base64 = await FileSystem.readAsStringAsync(cleanUri, {
           encoding: FileSystem.EncodingType.Base64,
         });
+        if (cleanUri.toLowerCase().endsWith('.png')) {
+          mimeType = 'image/png';
+        }
       }
-      
-      return apiFetch<any>('/api/analisis/procesar', {
-        method: 'POST',
-        body: JSON.stringify({ imageBase64: base64 }),
-      });
+
+      if (!base64) {
+        return { success: false, error: language === 'en' ? 'Could not retrieve image for analysis.' : 'No se pudo obtener la imagen para el análisis.' };
+      }
+
+      const prompt = language === 'en'
+        ? `You are an expert plant pathologist and agronomist specializing in potato diseases. Analyze the following potato plant/leaf image.
+Look for visual symptoms of "Potato Purple Top" (PMP) or "Zebra Chip" syndrome.
+Strictly return a valid JSON object matching this exact structure (no markdown fences, no explanatory text outside the JSON):
+{
+  "diagnostico": "Possible PMP" or "Healthy" or "Severe PMP" or "Nutritional Deficiency",
+  "estado": "alerta" or "sano" or "observacion",
+  "severidad": "baja" or "moderada" or "alta" or "ninguna",
+  "confianza": 95,
+  "sintomas": ["symptom 1 in English", "symptom 2 in English"],
+  "recomendaciones": ["recommendation 1 in English", "recommendation 2 in English"]
+}
+Notice: 'estado' and 'severidad' must remain as standard key values, but 'diagnostico', 'sintomas', and 'recomendaciones' MUST be written entirely in fluent, professional English.`
+        : `Eres un agrónomo experto en patología vegetal de la papa. Analiza la siguiente imagen.
+Busca signos visuales de "Punta Morada de la Papa" (PMP).
+Devuelve estrictamente un JSON válido con esta estructura exacta (no uses markdown ni texto adicional fuera del JSON):
+{
+  "diagnostico": "Posible PMP" o "Sano" o "PMP Severo" o "Deficiencia Nutricional",
+  "estado": "alerta" o "sano" o "observacion",
+  "severidad": "baja" o "moderada" o "alta" o "ninguna",
+  "confianza": 95,
+  "sintomas": ["sintoma 1", "sintoma 2"],
+  "recomendaciones": ["recomendacion 1", "recomendacion 2"]
+}`;
+
+      // Modelos oficiales vigentes y verificados con respaldo automático
+      const models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite', 'gemini-3.5-flash'];
+      let parsedData: any = null;
+      let lastErrorMessage = '';
+
+      for (const model of models) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: prompt },
+                  {
+                    inlineData: {
+                      mimeType: mimeType,
+                      data: base64,
+                    }
+                  }
+                ]
+              }],
+              generationConfig: {
+                responseMimeType: 'application/json'
+              }
+            })
+          });
+
+          if (!response.ok) {
+            const errJson = await response.json().catch(() => null);
+            lastErrorMessage = errJson?.error?.message || `HTTP ${response.status}`;
+            console.warn(`[Gemini Direct] Modelo ${model} respondió error:`, lastErrorMessage);
+            continue;
+          }
+
+          const result = await response.json();
+          const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (responseText) {
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              parsedData = JSON.parse(jsonMatch[0]);
+              break;
+            }
+          }
+        } catch (mErr: any) {
+          lastErrorMessage = mErr.message;
+          console.warn(`[Gemini Direct] Excepción con modelo ${model}:`, mErr.message);
+        }
+      }
+
+      if (!parsedData) {
+        return {
+          success: false,
+          error: lastErrorMessage ? `Error de IA: ${lastErrorMessage}` : 'No se pudo generar el diagnóstico con IA.'
+        };
+      }
+
+      return { success: true, data: parsedData };
     } catch (e: any) {
       console.warn('Error procesando imagen localmente:', e.message);
-      return { success: false, error: 'Error procesando la imagen localmente.' };
+      return { success: false, error: 'Error procesando la imagen con IA.' };
     }
   },
 
@@ -490,12 +609,46 @@ export const revisionesApi = {
 // ============================================================
 
 export const vinculosApi = {
-  async generarCodigo(): Promise<ApiResponse<{ codigo: string }>> {
-    return { success: true, data: { codigo: generateId().substring(0, 5).toUpperCase() } };
+  async getCodigosVinculados(): Promise<string[]> {
+    return getLocalData<string[]>(PARCELAS_VINCULADAS_KEY, []);
   },
 
-  async vincular(codigo: string): Promise<ApiResponse<{ agricultorNombre: string }>> {
-    return { success: true, data: { agricultorNombre: 'Agricultor ' + codigo } };
+  async vincular(codigo: string): Promise<ApiResponse<{ cultivo: Cultivo; agricultorNombre: string }>> {
+    const cleanCode = codigo.trim().toUpperCase();
+    const cultivos = await getLocalData<Cultivo[]>(CULTIVOS_KEY, []);
+    const cultivo = cultivos.find(c => (c.codigoAcceso || '').toUpperCase() === cleanCode);
+
+    if (!cultivo) {
+      return {
+        success: false,
+        error: 'No se encontró ninguna parcela con este código. Verifica el código con el agricultor.',
+      };
+    }
+
+    const vinculosActuales = await getLocalData<string[]>(PARCELAS_VINCULADAS_KEY, []);
+    if (!vinculosActuales.includes(cleanCode)) {
+      vinculosActuales.push(cleanCode);
+      await saveLocalData(PARCELAS_VINCULADAS_KEY, vinculosActuales);
+    }
+
+    const perfil = await getLocalData<PerfilResponse | null>(PERFIL_KEY, null);
+    const agricultorNombre = perfil?.agricultor?.nombre || 'Agricultor';
+
+    return {
+      success: true,
+      data: {
+        cultivo,
+        agricultorNombre,
+      },
+    };
+  },
+
+  async desvincular(codigo: string): Promise<ApiResponse<void>> {
+    const cleanCode = codigo.trim().toUpperCase();
+    let vinculosActuales = await getLocalData<string[]>(PARCELAS_VINCULADAS_KEY, []);
+    vinculosActuales = vinculosActuales.filter(c => c !== cleanCode);
+    await saveLocalData(PARCELAS_VINCULADAS_KEY, vinculosActuales);
+    return { success: true };
   },
 
   async getAgricultores(): Promise<ApiResponse<any[]>> {

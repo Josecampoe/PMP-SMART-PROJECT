@@ -7,18 +7,19 @@ import {
   Modal,
   TextInput,
   Alert,
+  Switch,
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { authApi } from '../../lib/api';
 
-
 export default function PerfilScreen() {
   const router = useRouter();
   const {
     rolActivo,
+    setRolActivo,
     perfilAgricultor,
     perfilTecnico,
     updatePerfilAgricultor,
@@ -27,16 +28,22 @@ export default function PerfilScreen() {
     analisisHistorial,
     limpiarTodosLosDatos,
     cargarDatosDemo,
+    theme,
+    isDarkMode,
+    toggleDarkMode,
+    language,
+    setLanguage,
+    t,
   } = useApp();
 
   const handleCerrarSesion = () => {
     Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que deseas cerrar tu sesión?',
+      t('cerrarSesion'),
+      language === 'en' ? 'Are you sure you want to sign out?' : '¿Estás seguro de que deseas cerrar tu sesión?',
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('cancelar'), style: 'cancel' },
         {
-          text: 'Cerrar Sesión',
+          text: t('cerrarSesion'),
           style: 'destructive',
           onPress: async () => {
             await authApi.logout();
@@ -47,7 +54,7 @@ export default function PerfilScreen() {
     );
   };
 
-  // Estados de edición Agricultor con fallbacks seguros
+  // Estados de edición Agricultor
   const [modalEditAgr, setModalEditAgr] = useState(false);
   const [nombreAgr, setNombreAgr] = useState(perfilAgricultor?.nombre || '');
   const [fincaAgr, setFincaAgr] = useState(perfilAgricultor?.fincaPrincipal || '');
@@ -55,7 +62,7 @@ export default function PerfilScreen() {
   const [telefonoAgr, setTelefonoAgr] = useState(perfilAgricultor?.telefono || '');
   const [emailAgr, setEmailAgr] = useState(perfilAgricultor?.email || '');
 
-  // Estados de edición Técnico con fallbacks seguros
+  // Estados de edición Técnico
   const [modalEditTec, setModalEditTec] = useState(false);
   const [nombreTec, setNombreTec] = useState(perfilTecnico?.nombre || '');
   const [regTec, setRegTec] = useState(perfilTecnico?.registroProfesional || '');
@@ -69,49 +76,51 @@ export default function PerfilScreen() {
 
   const handleGuardarPerfilAgr = () => {
     if (!nombreAgr.trim()) {
-      Alert.alert('Campo requerido', 'Por favor ingresa tu nombre.');
+      Alert.alert(language === 'en' ? 'Required field' : 'Campo requerido', language === 'en' ? 'Please enter your name.' : 'Por favor ingresa tu nombre.');
       return;
     }
     updatePerfilAgricultor({
       nombre: nombreAgr.trim(),
-      fincaPrincipal: fincaAgr.trim() || 'Finca Principal',
+      fincaPrincipal: fincaAgr.trim() || (language === 'en' ? 'Main Farm' : 'Finca Principal'),
       ubicacion: ubicacionAgr.trim() || 'Colombia',
       telefono: telefonoAgr.trim(),
       email: emailAgr.trim(),
     });
     setModalEditAgr(false);
-    Alert.alert('Perfil actualizado', 'Datos de agricultor guardados correctamente.');
+    Alert.alert(language === 'en' ? 'Profile Updated' : 'Perfil actualizado', language === 'en' ? 'Farmer details saved.' : 'Datos de agricultor guardados correctamente.');
   };
 
   const handleGuardarPerfilTec = () => {
     if (!nombreTec.trim()) {
-      Alert.alert('Campo requerido', 'Por favor ingresa tu nombre.');
+      Alert.alert(language === 'en' ? 'Required field' : 'Campo requerido', language === 'en' ? 'Please enter your name.' : 'Por favor ingresa tu nombre.');
       return;
     }
     updatePerfilTecnico({
       nombre: nombreTec.trim(),
       registroProfesional: regTec.trim() || 'ICA-REG',
-      especialidad: espTec.trim() || 'Sanidad Vegetal',
-      entidad: entidadTec.trim() || 'Asistencia Técnica',
+      especialidad: espTec.trim() || (language === 'en' ? 'Plant Pathology' : 'Sanidad Vegetal'),
+      entidad: entidadTec.trim() || (language === 'en' ? 'Technical Advisory' : 'Asistencia Técnica'),
       telefono: telefonoTec.trim(),
       email: emailTec.trim(),
     });
     setModalEditTec(false);
-    Alert.alert('Perfil actualizado', 'Datos de técnico agrónomo guardados correctamente.');
+    Alert.alert(language === 'en' ? 'Profile Updated' : 'Perfil actualizado', language === 'en' ? 'Agronomist details saved.' : 'Datos de técnico guardados correctamente.');
   };
 
   const handleLimpiarDatos = () => {
     Alert.alert(
-      'Restablecer Datos Locales',
-      '¿Deseas vaciar todas las parcelas y registros de escaneos para comenzar desde cero con datos reales?',
+      t('restablecerDatos'),
+      language === 'en'
+        ? 'Do you want to clear all plots and scan history from local storage?'
+        : '¿Deseas vaciar todas las parcelas y registros de escaneos para comenzar desde cero con datos reales?',
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('cancelar'), style: 'cancel' },
         {
-          text: 'Restablecer Todo',
+          text: language === 'en' ? 'Reset All' : 'Restablecer Todo',
           style: 'destructive',
           onPress: () => {
             limpiarTodosLosDatos();
-            Alert.alert('Datos Restablecidos', 'Se ha limpiado la base de datos local.');
+            Alert.alert(language === 'en' ? 'Database Cleared' : 'Datos Restablecidos', language === 'en' ? 'Local database is now empty.' : 'Se ha limpiado la base de datos local.');
           },
         },
       ]
@@ -120,15 +129,17 @@ export default function PerfilScreen() {
 
   const handleCargarDemo = () => {
     Alert.alert(
-      'Cargar Datos de Demostración',
-      '¿Deseas cargar parcelas y análisis de prueba para evaluar el flujo de agricultor y técnico?',
+      t('cargarDemo'),
+      language === 'en'
+        ? 'Load demo potato plots and AI diagnostic scans?'
+        : '¿Deseas cargar parcelas y análisis de prueba para evaluar el flujo de agricultor y técnico?',
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('cancelar'), style: 'cancel' },
         {
-          text: 'Cargar Datos',
+          text: t('cargarDemo'),
           onPress: () => {
             cargarDatosDemo();
-            Alert.alert('Datos cargados', 'Se han cargado casos de prueba en tu historial.');
+            Alert.alert(language === 'en' ? 'Demo Loaded' : 'Datos cargados', language === 'en' ? 'Sample records added to history.' : 'Se han cargado casos de prueba en tu historial.');
           },
         },
       ]
@@ -140,14 +151,16 @@ export default function PerfilScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FFFDF5]">
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
       {/* 1. ENCABEZADO */}
-      <View className="bg-white px-5 pt-3 pb-3 border-b border-gray-100 shadow-sm shrink-0">
-        <View className="flex-row justify-between items-center mb-2.5">
+      <View style={{ backgroundColor: theme.card, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: theme.cardBorder }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View>
-            <Text className="text-xl font-bold text-[#263238]">Perfil de Usuario</Text>
-            <Text className="text-xs text-gray-500">
-              {rolActivo === 'agricultor' ? 'Modo Productor Agrícola' : 'Modo Técnico Agrónomo'}
+            <Text style={{ fontSize: 20, fontWeight: '800', color: theme.text }}>
+              {t('perfilTitulo')}
+            </Text>
+            <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
+              {rolActivo === 'agricultor' ? t('rolAgricultor') : t('rolTecnico')}
             </Text>
           </View>
           <TouchableOpacity
@@ -169,310 +182,473 @@ export default function PerfilScreen() {
                 setModalEditTec(true);
               }
             }}
-            className="bg-gray-100 p-2 rounded-xl active:scale-95">
-            <FontAwesome
-              name="pencil"
-              size={15}
-              color={rolActivo === 'agricultor' ? '#2E7D32' : '#1565C0'}
-            />
+            style={{
+              backgroundColor: rolActivo === 'tecnico' ? (isDarkMode ? 'rgba(59, 130, 246, 0.2)' : '#EFF6FF') : theme.primaryLight,
+              padding: 10,
+              borderRadius: 14,
+            }}>
+            <Ionicons name="pencil" size={16} color={rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary} />
           </TouchableOpacity>
         </View>
-
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-4 pb-20" showsVerticalScrollIndicator={false}>
-        {/* 2. TARJETA DE PERFIL SEGÚN ROL */}
-        {rolActivo === 'agricultor' ? (
-          <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
-            <View className="flex-row items-center mb-3">
-              <View className="w-16 h-16 rounded-full bg-[#2E7D32]/10 items-center justify-center border-2 border-[#2E7D32]/30 mr-3.5">
-                <Text className="text-2xl">👨‍🌾</Text>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        {/* 2. CARD DE APARIENCIA E IDIOMA (DARK MODE & ENGLISH) */}
+        <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 4 }}>
+          {t('seccionApariencia')}
+        </Text>
+        <View
+          style={{
+            backgroundColor: theme.card,
+            borderRadius: 20,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: theme.cardBorder,
+            marginBottom: 20,
+          }}>
+          {/* Switch Modo Oscuro */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  backgroundColor: isDarkMode ? 'rgba(245, 158, 11, 0.15)' : 'rgba(245, 158, 11, 0.12)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 12,
+                }}>
+                <Ionicons name={isDarkMode ? 'moon' : 'sunny'} size={20} color="#F59E0B" />
               </View>
-              <View className="flex-1">
-                <View className="flex-row items-center">
-                  <Text className="text-base font-bold text-[#263238]">
-                    {perfilAgricultor?.nombre || 'Productor de Papa'}
-                  </Text>
-                </View>
-                <Text className="text-xs text-emerald-800 font-semibold mt-0.5">
-                  Productor Agrícola
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>
+                  {t('modoOscuro')}
                 </Text>
-                <Text className="text-xs text-gray-500 font-medium">
-                  📍 {perfilAgricultor?.fincaPrincipal || 'Finca'} ·{' '}
-                  {perfilAgricultor?.ubicacion || 'Colombia'}
+                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
+                  {t('modoOscuroDesc')}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={isDarkMode}
+              onValueChange={toggleDarkMode}
+              trackColor={{ false: '#D1D5DB', true: rolActivo === 'tecnico' ? (isDarkMode ? '#3B82F6' : '#2563EB') : theme.primary }}
+              thumbColor={'#FFFFFF'}
+            />
+          </View>
+
+          <View style={{ height: 1, backgroundColor: theme.cardBorderSubtle, marginBottom: 16 }} />
+
+          {/* Selector de Idioma (Español / English) */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  backgroundColor: rolActivo === 'tecnico' ? (isDarkMode ? 'rgba(59, 130, 246, 0.18)' : '#EFF6FF') : theme.primaryLight,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 12,
+                }}>
+                <Ionicons name="language" size={20} color={rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>
+                  {t('idioma')}
+                </Text>
+                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
+                  {t('idiomaDesc')}
                 </Text>
               </View>
             </View>
 
-            <View className="bg-gray-50 rounded-xl p-3 border border-gray-100 gap-1.5">
-              <View className="flex-row items-center">
-                <FontAwesome name="phone" size={12} color="#6B7280" className="w-4" />
-                <Text className="text-xs text-gray-600 ml-2 font-medium">
-                  {perfilAgricultor?.telefono || 'Teléfono no registrado'}
+            <View style={{ flexDirection: 'row', backgroundColor: theme.inputBg, borderRadius: 12, padding: 3, borderWidth: 1, borderColor: theme.cardBorder }}>
+              <TouchableOpacity
+                onPress={() => setLanguage('es')}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 10,
+                  backgroundColor: language === 'es' ? (rolActivo === 'tecnico' ? (isDarkMode ? '#2563EB' : '#1D4ED8') : theme.primary) : 'transparent',
+                }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: language === 'es' ? '#FFFFFF' : theme.textMuted }}>
+                  ES
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setLanguage('en')}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 10,
+                  backgroundColor: language === 'en' ? (rolActivo === 'tecnico' ? (isDarkMode ? '#2563EB' : '#1D4ED8') : theme.primary) : 'transparent',
+                }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: language === 'en' ? '#FFFFFF' : theme.textMuted }}>
+                  EN
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* 3. TARJETA DE PERFIL SEGÚN ROL */}
+        <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 4 }}>
+          {t('seccionUsuario')}
+        </Text>
+        {rolActivo === 'agricultor' ? (
+          <View
+            style={{
+              backgroundColor: theme.card,
+              borderRadius: 20,
+              padding: 18,
+              borderWidth: 1,
+              borderColor: theme.cardBorder,
+              marginBottom: 20,
+            }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 18,
+                  backgroundColor: theme.primaryLight,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 2,
+                  borderColor: theme.primaryLightBorder,
+                  marginRight: 14,
+                }}>
+                <Text style={{ fontSize: 26 }}>👨‍🌾</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
+                  {perfilAgricultor?.nombre || (language === 'en' ? 'Potato Grower' : 'Productor de Papa')}
+                </Text>
+                <Text style={{ fontSize: 12, color: theme.primary, fontWeight: '700', marginTop: 2 }}>
+                  {t('rolAgricultor')}
+                </Text>
+                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
+                  📍 {perfilAgricultor?.fincaPrincipal || 'Finca'} · {perfilAgricultor?.ubicacion || 'Colombia'}
                 </Text>
               </View>
-              <View className="flex-row items-center">
-                <FontAwesome name="envelope-o" size={12} color="#6B7280" className="w-4" />
-                <Text className="text-xs text-gray-600 ml-2 font-medium">
-                  {perfilAgricultor?.email || 'Correo no registrado'}
+            </View>
+
+            <View style={{ backgroundColor: theme.inputBg, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: theme.cardBorderSubtle }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                <Ionicons name="call-outline" size={14} color={theme.textMuted} />
+                <Text style={{ fontSize: 12, color: theme.textSecondary, marginLeft: 8 }}>
+                  {perfilAgricultor?.telefono || (language === 'en' ? 'No phone registered' : 'Teléfono no registrado')}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="mail-outline" size={14} color={theme.textMuted} />
+                <Text style={{ fontSize: 12, color: theme.textSecondary, marginLeft: 8 }}>
+                  {perfilAgricultor?.email || (language === 'en' ? 'No email registered' : 'Correo no registrado')}
                 </Text>
               </View>
             </View>
           </View>
         ) : (
-          <View className="bg-white rounded-2xl p-4 shadow-sm border border-blue-200 mb-4">
-            <View className="flex-row items-center mb-3">
-              <View className="w-16 h-16 rounded-full bg-[#1565C0]/10 items-center justify-center border-2 border-[#1565C0]/30 mr-3.5">
-                <Text className="text-2xl">🔬</Text>
+          <View
+            style={{
+              backgroundColor: theme.card,
+              borderRadius: 20,
+              padding: 18,
+              borderWidth: 1,
+              borderColor: theme.cardBorder,
+              marginBottom: 20,
+            }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 2,
+                  borderColor: 'rgba(59, 130, 246, 0.3)',
+                  marginRight: 14,
+                }}>
+                <Text style={{ fontSize: 26 }}>🔬</Text>
               </View>
-              <View className="flex-1">
-                <Text className="text-base font-bold text-[#263238]">
-                  {perfilTecnico?.nombre || 'Ing. Agrónomo Fitosanitario'}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
+                  {perfilTecnico?.nombre || (language === 'en' ? 'Plant Pathologist Agronomist' : 'Ing. Agrónomo Fitosanitario')}
                 </Text>
-                <Text className="text-xs text-[#1565C0] font-bold mt-0.5">
+                <Text style={{ fontSize: 12, color: '#3B82F6', fontWeight: '700', marginTop: 2 }}>
                   Reg: {perfilTecnico?.registroProfesional || 'ICA-REG'}
                 </Text>
-                <Text className="text-xs text-gray-600 font-medium">
-                  {perfilTecnico?.especialidad || 'Sanidad Vegetal'} ·{' '}
-                  {perfilTecnico?.entidad || 'Asistencia Técnica'}
+                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
+                  {perfilTecnico?.especialidad || 'Sanidad Vegetal'} · {perfilTecnico?.entidad || 'Asistencia Técnica'}
                 </Text>
               </View>
             </View>
 
-            <View className="bg-blue-50/50 rounded-xl p-3 border border-blue-100 gap-1.5">
-              <View className="flex-row items-center">
-                <FontAwesome name="id-badge" size={12} color="#1565C0" className="w-4" />
-                <Text className="text-xs text-gray-700 ml-2 font-medium">
-                  Registro ICA / Profesional:{' '}
+            <View style={{ backgroundColor: theme.inputBg, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: theme.cardBorderSubtle }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="ribbon-outline" size={14} color="#3B82F6" />
+                <Text style={{ fontSize: 12, color: theme.textSecondary, marginLeft: 8 }}>
                   {perfilTecnico?.registroProfesional || 'ICA-COL'}
-                </Text>
-              </View>
-              <View className="flex-row items-center">
-                <FontAwesome name="envelope-o" size={12} color="#1565C0" className="w-4" />
-                <Text className="text-xs text-gray-700 ml-2 font-medium">
-                  {perfilTecnico?.email || 'Contacto institucional activo'}
                 </Text>
               </View>
             </View>
           </View>
         )}
 
-        {/* 3. RESUMEN ESTADÍSTICO */}
-        <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex-row justify-around mb-4">
-          <View className="items-center">
-            <Text className="text-xl font-black text-[#2E7D32]">{(cultivos || []).length}</Text>
-            <Text className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">Parcelas</Text>
+        {/* 4. RESUMEN ESTADÍSTICO */}
+        <View
+          style={{
+            backgroundColor: theme.card,
+            borderRadius: 20,
+            padding: 16,
+            borderWidth: 1,
+            borderColor: theme.cardBorder,
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            marginBottom: 20,
+          }}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary }}>{(cultivos || []).length}</Text>
+            <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginTop: 2 }}>
+              {t('metricasParcelas')}
+            </Text>
           </View>
-          <View className="w-[1px] bg-gray-100" />
-          <View className="items-center">
-            <Text className="text-xl font-black text-[#263238]">
+          <View style={{ width: 1, backgroundColor: theme.cardBorderSubtle }} />
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: theme.text }}>
               {(analisisHistorial || []).length}
             </Text>
-            <Text className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">Monitoreos</Text>
+            <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginTop: 2 }}>
+              {t('metricasEscaneos')}
+            </Text>
           </View>
-          <View className="w-[1px] bg-gray-100" />
-          <View className="items-center">
-            <Text className="text-xl font-black text-[#1565C0]">
+          <View style={{ width: 1, backgroundColor: theme.cardBorderSubtle }} />
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: theme.warning }}>
               {(analisisHistorial || []).filter((a) => a?.estadoRevision === 'revisado').length}
             </Text>
-            <Text className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">Dictámenes</Text>
+            <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginTop: 2 }}>
+              {t('estadoRevisado')}
+            </Text>
           </View>
         </View>
 
-        {/* 4. GUÍA TÉCNICA: PUNTA MORADA */}
-        <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5">
-          GUÍA AGRONÓMICA: PUNTA MORADA (PMP)
+        {/* 5. GUÍA TÉCNICA: PUNTA MORADA */}
+        <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 4 }}>
+          {t('guiaPmpTitulo')}
         </Text>
 
-        <View className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-2.5 overflow-hidden">
+        <View style={{ backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.cardBorder, marginBottom: 10, overflow: 'hidden' }}>
           <TouchableOpacity
             onPress={() => toggleSeccion('que-es')}
-            className="p-3.5 flex-row justify-between items-center bg-gray-50/50">
-            <View className="flex-row items-center flex-1">
-              <Text className="text-base mr-2.5">🥔</Text>
-              <Text className="text-xs font-bold text-gray-800">
-                ¿Qué es la Punta Morada y su vector?
+            style={{ padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.card }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <Text style={{ fontSize: 16, marginRight: 10 }}>🥔</Text>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>
+                {t('guiaPmpQueEs')}
               </Text>
             </View>
-            <FontAwesome
+            <Ionicons
               name={seccionGuiaAbierta === 'que-es' ? 'chevron-up' : 'chevron-down'}
-              size={12}
-              color="#9CA3AF"
+              size={16}
+              color={theme.textMuted}
             />
           </TouchableOpacity>
           {seccionGuiaAbierta === 'que-es' && (
-            <View className="p-3.5 border-t border-gray-100">
-              <Text className="text-xs text-gray-600 leading-relaxed mb-2">
-                La <Text className="font-bold text-gray-800">Punta Morada de la Papa (PMP)</Text> es
-                un complejo fitosanitario causado por fitoplasmas (*Candidatus* Phytoplasma) y la bacteria
-                *Liberibacter*.
-              </Text>
-              <Text className="text-xs text-gray-600 leading-relaxed">
-                El vector transmisor es el psílido{' '}
-                <Text className="font-bold text-[#2E7D32]">Bactericera cockerelli</Text> (el saltón de la papa). El monitoreo temprano con la cámara permite identificar síntomas antes de la necrosis generalizada.
+            <View style={{ padding: 14, borderTopWidth: 1, borderTopColor: theme.cardBorderSubtle }}>
+              <Text style={{ fontSize: 12, color: theme.textSecondary, lineHeight: 18 }}>
+                {t('guiaPmpQueEsDesc')}
               </Text>
             </View>
           )}
         </View>
 
-        <View className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-5 overflow-hidden">
+        <View style={{ backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.cardBorder, marginBottom: 20, overflow: 'hidden' }}>
           <TouchableOpacity
             onPress={() => toggleSeccion('sintomas')}
-            className="p-3.5 flex-row justify-between items-center bg-gray-50/50">
-            <View className="flex-row items-center flex-1">
-              <Text className="text-base mr-2.5">🔍</Text>
-              <Text className="text-xs font-bold text-gray-800">
-                Síntomas característicos y diferenciación
+            style={{ padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.card }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <Text style={{ fontSize: 16, marginRight: 10 }}>🔍</Text>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>
+                {t('guiaPmpSintomas')}
               </Text>
             </View>
-            <FontAwesome
+            <Ionicons
               name={seccionGuiaAbierta === 'sintomas' ? 'chevron-up' : 'chevron-down'}
-              size={12}
-              color="#9CA3AF"
+              size={16}
+              color={theme.textMuted}
             />
           </TouchableOpacity>
           {seccionGuiaAbierta === 'sintomas' && (
-            <View className="p-3.5 border-t border-gray-100 gap-1.5">
-              <Text className="text-xs text-gray-600">
-                • <Text className="font-bold text-gray-800">Follaje:</Text> Pigmentación púrpura en brotes jóvenes apicales, hojas erectas en cuchara.
-              </Text>
-              <Text className="text-xs text-gray-600">
-                • <Text className="font-bold text-gray-800">Tallos:</Text> Engrosamiento de nudos y desarrollo de tubérculos aéreos.
-              </Text>
-              <Text className="text-xs text-gray-600">
-                • <Text className="font-bold text-gray-800">Tubérculo:</Text> Necrosis anular en los vasos conductores (afecta fritura y venta).
+            <View style={{ padding: 14, borderTopWidth: 1, borderTopColor: theme.cardBorderSubtle }}>
+              <Text style={{ fontSize: 12, color: theme.textSecondary, lineHeight: 18 }}>
+                {t('guiaPmpSintomasDesc')}
               </Text>
             </View>
           )}
         </View>
 
-        {/* 5. GESTIÓN DE DATOS */}
-        <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5">
-          ADMINISTRACIÓN DE DATOS LOCALES
+        {/* 6. GESTIÓN DE DATOS */}
+        <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 4 }}>
+          {language === 'en' ? 'LOCAL DATA MANAGEMENT' : 'ADMINISTRACIÓN DE DATOS LOCALES'}
         </Text>
 
-        <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 gap-2.5">
+        <View style={{ backgroundColor: theme.card, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: theme.cardBorder, marginBottom: 20, gap: 10 }}>
           <TouchableOpacity
             onPress={handleCargarDemo}
-            className="p-3 rounded-xl bg-gray-50 border border-gray-200 flex-row items-center justify-between active:scale-98">
-            <View className="flex-row items-center">
-              <FontAwesome name="download" size={14} color="#1565C0" className="mr-2.5" />
+            activeOpacity={0.8}
+            style={{ padding: 14, borderRadius: 14, backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.cardBorderSubtle, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="cloud-download-outline" size={18} color={rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary} style={{ marginRight: 10 }} />
               <View>
-                <Text className="text-xs font-bold text-gray-800">Cargar Datos de Demostración</Text>
-                <Text className="text-[10px] text-gray-500">
-                  Agrega parcelas y análisis de ejemplo para probar
+                <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>{t('cargarDemo')}</Text>
+                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
+                  {language === 'en' ? 'Populate test plots and diagnostic history' : 'Agrega parcelas y análisis de ejemplo para probar'}
                 </Text>
               </View>
             </View>
-            <FontAwesome name="chevron-right" size={11} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={14} color={theme.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handleLimpiarDatos}
-            className="p-3 rounded-xl bg-red-50 border border-red-200 flex-row items-center justify-between active:scale-98">
-            <View className="flex-row items-center">
-              <FontAwesome name="trash" size={14} color="#DC2626" className="mr-2.5" />
+            activeOpacity={0.8}
+            style={{ padding: 14, borderRadius: 14, backgroundColor: theme.dangerBg, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="trash-outline" size={18} color={theme.danger} style={{ marginRight: 10 }} />
               <View>
-                <Text className="text-xs font-bold text-red-700">Restablecer Todo a Cero</Text>
-                <Text className="text-[10px] text-red-500">
-                  Borra todos los lotes y análisis guardados
+                <Text style={{ fontSize: 13, fontWeight: '700', color: theme.danger }}>{t('restablecerDatos')}</Text>
+                <Text style={{ fontSize: 11, color: theme.danger, opacity: 0.8, marginTop: 2 }}>
+                  {language === 'en' ? 'Deletes all stored crops and analysis records' : 'Borra todos los lotes y análisis guardados'}
                 </Text>
               </View>
             </View>
-            <FontAwesome name="chevron-right" size={11} color="#DC2626" />
+            <Ionicons name="chevron-forward" size={14} color={theme.danger} />
           </TouchableOpacity>
         </View>
 
-        {/* BOTÓN CERRAR SESIÓN */}
+        {/* 7. BOTÓN CERRAR SESIÓN */}
         <TouchableOpacity
           onPress={handleCerrarSesion}
-          className="mb-4 p-3.5 rounded-2xl bg-red-600 items-center shadow-sm active:scale-95">
-          <View className="flex-row items-center">
-            <FontAwesome name="sign-out" size={16} color="white" />
-            <Text className="text-white font-bold text-sm ml-2">Cerrar Sesión</Text>
+          activeOpacity={0.85}
+          style={{
+            marginBottom: 20,
+            paddingVertical: 14,
+            borderRadius: 16,
+            backgroundColor: theme.danger,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="log-out-outline" size={18} color="white" />
+            <Text style={{ color: 'white', fontWeight: '800', fontSize: 14, marginLeft: 8 }}>
+              {t('cerrarSesion')}
+            </Text>
           </View>
         </TouchableOpacity>
 
-        <Text className="text-center text-[11px] text-gray-400 mb-6">
-          PMP Smart v2.0 · Plataforma de Monitoreo y Dictamen Fitosanitario
+        <Text style={{ textAlign: 'center', fontSize: 11, color: theme.textMuted, marginBottom: 20 }}>
+          PMP Smart · Potato Phytosanitary Intelligence
         </Text>
       </ScrollView>
 
       {/* MODAL EDITAR AGRICULTOR */}
       <Modal visible={modalEditAgr} animationType="slide" transparent>
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-5 max-h-[90%]">
-            <View className="flex-row justify-between items-center mb-4 pb-2 border-b border-gray-100">
-              <Text className="text-base font-bold text-[#263238]">Editar Datos del Agricultor</Text>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, maxHeight: '90%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: theme.cardBorderSubtle }}>
+              <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
+                {language === 'en' ? 'Edit Farmer Details' : 'Editar Datos del Agricultor'}
+              </Text>
               <TouchableOpacity onPress={() => setModalEditAgr(false)}>
-                <FontAwesome name="times" size={16} color="#6B7280" />
+                <Ionicons name="close" size={22} color={theme.textMuted} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} className="mb-4">
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">Nombre Completo *</Text>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 16 }}>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
+                  {language === 'en' ? 'FULL NAME *' : 'NOMBRE COMPLETO *'}
+                </Text>
                 <TextInput
                   value={nombreAgr}
                   onChangeText={setNombreAgr}
-                  placeholder="Tu nombre real"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
+                  placeholder={language === 'en' ? 'Your real name' : 'Tu nombre real'}
+                  placeholderTextColor={theme.textMuted}
+                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
                 />
               </View>
 
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">Finca Principal</Text>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
+                  {language === 'en' ? 'MAIN FARM' : 'FINCA PRINCIPAL'}
+                </Text>
                 <TextInput
                   value={fincaAgr}
                   onChangeText={setFincaAgr}
-                  placeholder="Nombre de tu finca"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
+                  placeholder={language === 'en' ? 'Farm name' : 'Nombre de tu finca'}
+                  placeholderTextColor={theme.textMuted}
+                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
                 />
               </View>
 
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">Municipio / Ubicación</Text>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
+                  {language === 'en' ? 'LOCATION' : 'MUNICIPIO / UBICACIÓN'}
+                </Text>
                 <TextInput
                   value={ubicacionAgr}
                   onChangeText={setUbicacionAgr}
-                  placeholder="Municipio, Departamento"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
+                  placeholder="Pasto, Nariño"
+                  placeholderTextColor={theme.textMuted}
+                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
                 />
               </View>
 
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">Teléfono de Contacto</Text>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
+                  {language === 'en' ? 'PHONE' : 'TELÉFONO'}
+                </Text>
                 <TextInput
                   value={telefonoAgr}
                   onChangeText={setTelefonoAgr}
                   placeholder="+57..."
                   keyboardType="phone-pad"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
+                  placeholderTextColor={theme.textMuted}
+                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
                 />
               </View>
 
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">Correo Electrónico</Text>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
+                  {language === 'en' ? 'EMAIL' : 'CORREO ELECTRÓNICO'}
+                </Text>
                 <TextInput
                   value={emailAgr}
                   onChangeText={setEmailAgr}
                   placeholder="correo@ejemplo.com"
                   keyboardType="email-address"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
+                  placeholderTextColor={theme.textMuted}
+                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
                 />
               </View>
             </ScrollView>
 
-            <View className="flex-row gap-3 pt-2 border-t border-gray-100">
+            <View style={{ flexDirection: 'row', gap: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: theme.cardBorderSubtle }}>
               <TouchableOpacity
                 onPress={() => setModalEditAgr(false)}
-                className="flex-1 py-3 rounded-xl border border-gray-300 items-center">
-                <Text className="text-gray-600 font-bold text-xs">Cancelar</Text>
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.cardBorder, alignItems: 'center' }}>
+                <Text style={{ color: theme.textSecondary, fontWeight: '700', fontSize: 13 }}>{t('cancelar')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleGuardarPerfilAgr}
-                className="flex-1 py-3 rounded-xl bg-[#2E7D32] items-center shadow-sm">
-                <Text className="text-white font-bold text-xs">Guardar Cambios</Text>
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: theme.primary, alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>{t('guardar')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -481,95 +657,55 @@ export default function PerfilScreen() {
 
       {/* MODAL EDITAR TÉCNICO */}
       <Modal visible={modalEditTec} animationType="slide" transparent>
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-5 max-h-[90%]">
-            <View className="flex-row justify-between items-center mb-4 pb-2 border-b border-gray-100">
-              <Text className="text-base font-bold text-[#1565C0]">
-                Editar Credenciales de Agrónomo
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, maxHeight: '90%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: theme.cardBorderSubtle }}>
+              <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
+                {language === 'en' ? 'Edit Agronomist Details' : 'Editar Datos del Técnico'}
               </Text>
               <TouchableOpacity onPress={() => setModalEditTec(false)}>
-                <FontAwesome name="times" size={16} color="#6B7280" />
+                <Ionicons name="close" size={22} color={theme.textMuted} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} className="mb-4">
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">
-                  Nombre del Profesional *
+            <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 16 }}>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
+                  {language === 'en' ? 'FULL NAME *' : 'NOMBRE COMPLETO *'}
                 </Text>
                 <TextInput
                   value={nombreTec}
                   onChangeText={setNombreTec}
-                  placeholder="Ej: Ing. Mario Benavides"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
+                  placeholder={language === 'en' ? 'Your real name' : 'Tu nombre real'}
+                  placeholderTextColor={theme.textMuted}
+                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
                 />
               </View>
 
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">
-                  Registro Profesional / Tarjeta ICA *
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
+                  {language === 'en' ? 'PROFESSIONAL ID / REGISTRATION' : 'REGISTRO PROFESIONAL'}
                 </Text>
                 <TextInput
                   value={regTec}
                   onChangeText={setRegTec}
-                  placeholder="Ej: ICA-COL-8823 / MP-1920"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
-                />
-              </View>
-
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">Especialidad Agronómica</Text>
-                <TextInput
-                  value={espTec}
-                  onChangeText={setEspTec}
-                  placeholder="Ej: Fitopatología y Sanidad Vegetal"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
-                />
-              </View>
-
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">Entidad / Cooperativa</Text>
-                <TextInput
-                  value={entidadTec}
-                  onChangeText={setEntidadTec}
-                  placeholder="Ej: Cooperativa Agropecuaria / Asistencia Técnica"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
-                />
-              </View>
-
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">Teléfono Institucional</Text>
-                <TextInput
-                  value={telefonoTec}
-                  onChangeText={setTelefonoTec}
-                  placeholder="+57..."
-                  keyboardType="phone-pad"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
-                />
-              </View>
-
-              <View className="mb-3">
-                <Text className="text-xs font-bold text-gray-700 mb-1">Correo Electrónico</Text>
-                <TextInput
-                  value={emailTec}
-                  onChangeText={setEmailTec}
-                  placeholder="correo@ejemplo.com"
-                  keyboardType="email-address"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800"
+                  placeholder="ICA-04821"
+                  placeholderTextColor={theme.textMuted}
+                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
                 />
               </View>
             </ScrollView>
 
-            <View className="flex-row gap-3 pt-2 border-t border-gray-100">
+            <View style={{ flexDirection: 'row', gap: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: theme.cardBorderSubtle }}>
               <TouchableOpacity
                 onPress={() => setModalEditTec(false)}
-                className="flex-1 py-3 rounded-xl border border-gray-300 items-center">
-                <Text className="text-gray-600 font-bold text-xs">Cancelar</Text>
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.cardBorder, alignItems: 'center' }}>
+                <Text style={{ color: theme.textSecondary, fontWeight: '700', fontSize: 13 }}>{t('cancelar')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleGuardarPerfilTec}
-                className="flex-1 py-3 rounded-xl bg-[#1565C0] items-center shadow-sm">
-                <Text className="text-white font-bold text-xs">Guardar Credenciales</Text>
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: isDarkMode ? '#2563EB' : '#1D4ED8', alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>{t('guardar')}</Text>
               </TouchableOpacity>
             </View>
           </View>
