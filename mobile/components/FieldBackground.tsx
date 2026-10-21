@@ -85,3 +85,31 @@ function Star({ x, y, size, delay }: { x: number; y: number; size: number; delay
   );
 }
 
+// ---------- Colinas ----------
+function Hill({
+  width, height, bottom, color, sway, duration, offsetX,
+}: { width: number; height: number; bottom: number; color: string; sway: number; duration: number; offsetX: number }) {
+  const t = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const a = loop(t, duration);
+    a.start();
+    return () => a.stop();
+  }, []);
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        bottom,
+        left: offsetX,
+        width,
+        height,
+        borderTopLeftRadius: width / 2,
+        borderTopRightRadius: width / 2,
+        backgroundColor: color,
+        transform: [{ translateX: t.interpolate({ inputRange: [0, 1], outputRange: [-sway, sway] }) }],
+      }}
+    />
+  );
+}
+
