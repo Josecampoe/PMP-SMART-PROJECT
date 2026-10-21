@@ -150,8 +150,12 @@ function Leaf({
         opacity: rise.interpolate({ inputRange: [0, 0.12, 0.8, 1], outputRange: [0, 0.55, 0.4, 0] }),
         transform: [
           { translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [screenH + 30, screenH * 0.1] }) },
-          { translateX: rise.interpolate({ inputRange: [0, 1], outputRange: [0, drift] }) },
-          { translateX: sway.interpolate({ inputRange: [0, 1], outputRange: [-14, 14] }) },
+          {
+            translateX: Animated.add(
+              rise.interpolate({ inputRange: [0, 1], outputRange: [0, drift] }),
+              sway.interpolate({ inputRange: [0, 1], outputRange: [-14, 14] })
+            ),
+          },
           { rotate: rise.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${spin}deg`] }) },
           { rotateY: sway.interpolate({ inputRange: [0, 1], outputRange: ['-40deg', '40deg'] }) },
         ],
