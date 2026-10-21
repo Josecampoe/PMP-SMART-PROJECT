@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Alert, Animated, Easing } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, Alert, Animated, Easing, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,11 +32,21 @@ export default function Inicio() {
     setSelectedCultivoId,
     addCultivo,
     vincularParcelaPorCodigo,
+    refreshData,
     theme,
     language,
     t,
   } = useApp();
   const heroShadow = useElevation(2);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const [modalNuevoLote, setModalNuevoLote] = useState(false);
   const [nombreLote, setNombreLote] = useState('');
@@ -178,6 +188,7 @@ export default function Inicio() {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 40 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />}
         showsVerticalScrollIndicator={false}>
         {rolActivo === 'agricultor' ? (
           <Animated.View style={enterStyle}>
