@@ -306,3 +306,30 @@ export function Badge({ label, tone = 'neutral', icon, dot }: { label: string; t
   );
 }
 
+// ---------------------------------------------------------------------------
+// Título de sección
+// ---------------------------------------------------------------------------
+export function SectionTitle({
+  title,
+  actionLabel,
+  onAction,
+  style,
+}: {
+  title: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { theme } = useApp();
+  return (
+    <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }, style]}>
+      <Text style={{ fontSize: 17, fontWeight: '700', color: theme.text, letterSpacing: -0.2 }}>{title}</Text>
+      {actionLabel && onAction ? (
+        <TouchableOpacity onPress={onAction} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.primary }}>{actionLabel}</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  );
+}
+
