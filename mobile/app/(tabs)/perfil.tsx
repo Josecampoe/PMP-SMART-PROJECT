@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Modal,
-  TextInput,
-  Alert,
-  Switch,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -20,7 +11,6 @@ export default function PerfilScreen() {
   const router = useRouter();
   const {
     rolActivo,
-    setRolActivo,
     perfilAgricultor,
     perfilTecnico,
     updatePerfilAgricultor,
@@ -202,376 +192,153 @@ export default function PerfilScreen() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
       <ScreenHeader
         title={language === 'en' ? 'Profile' : 'Perfil'}
         subtitle={t('perfilSubtitulo')}
         right={<IconButton icon="create-outline" size={44} onPress={abrirEditor} accessibilityLabel={t('editarPerfil')} />}
       />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-        {/* 2. CARD DE APARIENCIA E IDIOMA (DARK MODE & ENGLISH) */}
-        <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 4 }}>
-          {t('seccionApariencia')}
-        </Text>
-        <View
-          style={{
-            backgroundColor: theme.card,
-            borderRadius: 20,
-            padding: 18,
-            borderWidth: 1,
-            borderColor: theme.cardBorder,
-            marginBottom: 20,
-          }}>
-          {/* Switch Modo Oscuro */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  backgroundColor: isDarkMode ? 'rgba(245, 158, 11, 0.15)' : 'rgba(245, 158, 11, 0.12)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: 12,
-                }}>
-                <Ionicons name={isDarkMode ? 'moon' : 'sunny'} size={20} color="#F59E0B" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>
-                  {t('modoOscuro')}
-                </Text>
-                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
-                  {t('modoOscuroDesc')}
-                </Text>
-              </View>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {/* Tarjeta de usuario */}
+        <Card padding={0} style={{ marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}>
+            <View
+              style={{
+                width: 60,
+                height: 60,
+                borderRadius: 30,
+                backgroundColor: theme.primary,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 14,
+              }}>
+              <Text style={{ fontSize: 22, fontWeight: '800', color: theme.onPrimary }}>{iniciales || '?'}</Text>
             </View>
-            <Switch
-              value={isDarkMode}
-              onValueChange={toggleDarkMode}
-              trackColor={{ false: '#D1D5DB', true: rolActivo === 'tecnico' ? (isDarkMode ? '#3B82F6' : '#2563EB') : theme.primary }}
-              thumbColor={'#FFFFFF'}
-            />
-          </View>
-
-          <View style={{ height: 1, backgroundColor: theme.cardBorderSubtle, marginBottom: 16 }} />
-
-          {/* Selector de Idioma (Español / English) */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  backgroundColor: rolActivo === 'tecnico' ? (isDarkMode ? 'rgba(59, 130, 246, 0.18)' : '#EFF6FF') : theme.primaryLight,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: 12,
-                }}>
-                <Ionicons name="language" size={20} color={rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>
-                  {t('idioma')}
-                </Text>
-                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
-                  {t('idiomaDesc')}
-                </Text>
-              </View>
-            </View>
-
-            <View style={{ flexDirection: 'row', backgroundColor: theme.inputBg, borderRadius: 12, padding: 3, borderWidth: 1, borderColor: theme.cardBorder }}>
-              <TouchableOpacity
-                onPress={() => setLanguage('es')}
-                style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 10,
-                  backgroundColor: language === 'es' ? (rolActivo === 'tecnico' ? (isDarkMode ? '#2563EB' : '#1D4ED8') : theme.primary) : 'transparent',
-                }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: language === 'es' ? '#FFFFFF' : theme.textMuted }}>
-                  ES
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setLanguage('en')}
-                style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 10,
-                  backgroundColor: language === 'en' ? (rolActivo === 'tecnico' ? (isDarkMode ? '#2563EB' : '#1D4ED8') : theme.primary) : 'transparent',
-                }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: language === 'en' ? '#FFFFFF' : theme.textMuted }}>
-                  EN
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* 3. TARJETA DE PERFIL SEGÚN ROL */}
-        <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 4 }}>
-          {t('seccionUsuario')}
-        </Text>
-        {rolActivo === 'agricultor' ? (
-          <View
-            style={{
-              backgroundColor: theme.card,
-              borderRadius: 20,
-              padding: 18,
-              borderWidth: 1,
-              borderColor: theme.cardBorder,
-              marginBottom: 20,
-            }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
-              <View
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 18,
-                  backgroundColor: theme.primaryLight,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: 2,
-                  borderColor: theme.primaryLightBorder,
-                  marginRight: 14,
-                }}>
-                <Text style={{ fontSize: 26 }}>👨‍🌾</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
-                  {perfilAgricultor?.nombre || (language === 'en' ? 'Potato Grower' : 'Productor de Papa')}
-                </Text>
-                <Text style={{ fontSize: 12, color: theme.primary, fontWeight: '700', marginTop: 2 }}>
-                  {t('rolAgricultor')}
-                </Text>
-                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
-                  📍 {perfilAgricultor?.fincaPrincipal || 'Finca'} · {perfilAgricultor?.ubicacion || 'Colombia'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={{ backgroundColor: theme.inputBg, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: theme.cardBorderSubtle }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                <Ionicons name="call-outline" size={14} color={theme.textMuted} />
-                <Text style={{ fontSize: 12, color: theme.textSecondary, marginLeft: 8 }}>
-                  {perfilAgricultor?.telefono || (language === 'en' ? 'No phone registered' : 'Teléfono no registrado')}
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="mail-outline" size={14} color={theme.textMuted} />
-                <Text style={{ fontSize: 12, color: theme.textSecondary, marginLeft: 8 }}>
-                  {perfilAgricultor?.email || (language === 'en' ? 'No email registered' : 'Correo no registrado')}
-                </Text>
-              </View>
-            </View>
-          </View>
-        ) : (
-          <View
-            style={{
-              backgroundColor: theme.card,
-              borderRadius: 20,
-              padding: 18,
-              borderWidth: 1,
-              borderColor: theme.cardBorder,
-              marginBottom: 20,
-            }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
-              <View
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 18,
-                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: 2,
-                  borderColor: 'rgba(59, 130, 246, 0.3)',
-                  marginRight: 14,
-                }}>
-                <Text style={{ fontSize: 26 }}>🔬</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
-                  {perfilTecnico?.nombre || (language === 'en' ? 'Plant Pathologist Agronomist' : 'Ing. Agrónomo Fitosanitario')}
-                </Text>
-                <Text style={{ fontSize: 12, color: '#3B82F6', fontWeight: '700', marginTop: 2 }}>
-                  Reg: {perfilTecnico?.registroProfesional || 'ICA-REG'}
-                </Text>
-                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
-                  {perfilTecnico?.especialidad || 'Sanidad Vegetal'} · {perfilTecnico?.entidad || 'Asistencia Técnica'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={{ backgroundColor: theme.inputBg, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: theme.cardBorderSubtle }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="ribbon-outline" size={14} color="#3B82F6" />
-                <Text style={{ fontSize: 12, color: theme.textSecondary, marginLeft: 8 }}>
-                  {perfilTecnico?.registroProfesional || 'ICA-COL'}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* 4. RESUMEN ESTADÍSTICO */}
-        <View
-          style={{
-            backgroundColor: theme.card,
-            borderRadius: 20,
-            padding: 16,
-            borderWidth: 1,
-            borderColor: theme.cardBorder,
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            marginBottom: 20,
-          }}>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary }}>{(cultivos || []).length}</Text>
-            <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginTop: 2 }}>
-              {t('metricasParcelas')}
-            </Text>
-          </View>
-          <View style={{ width: 1, backgroundColor: theme.cardBorderSubtle }} />
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: theme.text }}>
-              {(analisisHistorial || []).length}
-            </Text>
-            <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginTop: 2 }}>
-              {t('metricasEscaneos')}
-            </Text>
-          </View>
-          <View style={{ width: 1, backgroundColor: theme.cardBorderSubtle }} />
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: theme.warning }}>
-              {(analisisHistorial || []).filter((a) => a?.estadoRevision === 'revisado').length}
-            </Text>
-            <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginTop: 2 }}>
-              {t('estadoRevisado')}
-            </Text>
-          </View>
-        </View>
-
-        {/* 5. GUÍA TÉCNICA: PUNTA MORADA */}
-        <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 4 }}>
-          {t('guiaPmpTitulo')}
-        </Text>
-
-        <View style={{ backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.cardBorder, marginBottom: 10, overflow: 'hidden' }}>
-          <TouchableOpacity
-            onPress={() => toggleSeccion('que-es')}
-            style={{ padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.card }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              <Text style={{ fontSize: 16, marginRight: 10 }}>🥔</Text>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>
-                {t('guiaPmpQueEs')}
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: theme.text, letterSpacing: -0.3 }} numberOfLines={2}>
+                {nombreMostrado}
               </Text>
+              <View style={{ marginTop: 6 }}>
+                <Badge label={esTecnico ? t('rolTecnico') : t('rolAgricultor')} tone="primary" icon={esTecnico ? 'shield-checkmark' : 'leaf'} />
+              </View>
             </View>
-            <Ionicons
-              name={seccionGuiaAbierta === 'que-es' ? 'chevron-up' : 'chevron-down'}
-              size={16}
-              color={theme.textMuted}
-            />
-          </TouchableOpacity>
-          {seccionGuiaAbierta === 'que-es' && (
-            <View style={{ padding: 14, borderTopWidth: 1, borderTopColor: theme.cardBorderSubtle }}>
-              <Text style={{ fontSize: 12, color: theme.textSecondary, lineHeight: 18 }}>
-                {t('guiaPmpQueEsDesc')}
-              </Text>
-            </View>
-          )}
-        </View>
+          </View>
 
-        <View style={{ backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.cardBorder, marginBottom: 20, overflow: 'hidden' }}>
-          <TouchableOpacity
-            onPress={() => toggleSeccion('sintomas')}
-            style={{ padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.card }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              <Text style={{ fontSize: 16, marginRight: 10 }}>🔍</Text>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>
-                {t('guiaPmpSintomas')}
-              </Text>
-            </View>
-            <Ionicons
-              name={seccionGuiaAbierta === 'sintomas' ? 'chevron-up' : 'chevron-down'}
-              size={16}
-              color={theme.textMuted}
-            />
-          </TouchableOpacity>
-          {seccionGuiaAbierta === 'sintomas' && (
-            <View style={{ padding: 14, borderTopWidth: 1, borderTopColor: theme.cardBorderSubtle }}>
-              <Text style={{ fontSize: 12, color: theme.textSecondary, lineHeight: 18 }}>
-                {t('guiaPmpSintomasDesc')}
-              </Text>
-            </View>
-          )}
-        </View>
+          <Divider />
+          <View style={{ paddingHorizontal: 16, paddingVertical: 12, gap: 10 }}>
+            {contacto.map((c, i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name={c.icon} size={16} color={theme.textMuted} />
+                <Text style={{ fontSize: 14, color: c.muted ? theme.textMuted : theme.textSecondary, marginLeft: 10, flex: 1 }} numberOfLines={1}>
+                  {c.text}
+                </Text>
+              </View>
+            ))}
+          </View>
 
-        {/* 6. GESTIÓN DE DATOS */}
-        <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 4 }}>
-          {language === 'en' ? 'LOCAL DATA MANAGEMENT' : 'ADMINISTRACIÓN DE DATOS LOCALES'}
-        </Text>
+          <Divider />
+          <View style={{ flexDirection: 'row', paddingVertical: 14 }}>
+            {[
+              { value: (cultivos || []).length, label: language === 'en' ? 'Plots' : 'Parcelas' },
+              { value: (analisisHistorial || []).length, label: language === 'en' ? 'Scans' : 'Escaneos' },
+              { value: (analisisHistorial || []).filter((a) => a?.estadoRevision === 'revisado').length, label: t('estadoRevisado') },
+            ].map((s, i) => (
+              <View key={s.label} style={{ flex: 1, alignItems: 'center', borderLeftWidth: i > 0 ? 1 : 0, borderLeftColor: theme.cardBorderSubtle }}>
+                <Text style={{ fontSize: 20, fontWeight: '800', color: theme.text }}>{s.value}</Text>
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 1 }}>{s.label}</Text>
+              </View>
+            ))}
+          </View>
+        </Card>
 
-        <View style={{ backgroundColor: theme.card, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: theme.cardBorder, marginBottom: 20, gap: 10 }}>
-          <TouchableOpacity
+        {/* Apariencia */}
+        <GroupLabel>{t('seccionApariencia')}</GroupLabel>
+        <Card padding={0} style={{ marginBottom: 24 }}>
+          <SettingsRow
+            icon={isDarkMode ? 'moon' : 'sunny'}
+            tone="warning"
+            title={t('modoOscuro')}
+            desc={t('modoOscuroDesc')}
+            right={
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleDarkMode}
+                trackColor={{ false: theme.inputBorder, true: theme.primary }}
+                thumbColor="#FFFFFF"
+                ios_backgroundColor={theme.inputBorder}
+              />
+            }
+          />
+          <Divider inset={64} />
+          <SettingsRow
+            icon="language"
+            title={t('idioma')}
+            desc={t('idiomaDesc')}
+            right={
+              <View style={{ flexDirection: 'row', backgroundColor: theme.surfaceAlt, borderRadius: 10, padding: 3, borderWidth: 1, borderColor: theme.cardBorder }}>
+                {(['es', 'en'] as const).map((lng) => (
+                  <TouchableOpacity
+                    key={lng}
+                    onPress={() => setLanguage(lng)}
+                    activeOpacity={0.8}
+                    style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: language === lng ? theme.card : 'transparent' }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: language === lng ? theme.text : theme.textMuted }}>{lng.toUpperCase()}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            }
+          />
+        </Card>
+
+        {/* Guía PMP */}
+        <GroupLabel>{t('guiaPmpTitulo')}</GroupLabel>
+        <Card padding={0} style={{ marginBottom: 24 }}>
+          {guia.map((g, i) => {
+            const abierta = seccionGuiaAbierta === g.id;
+            return (
+              <View key={g.id}>
+                {i > 0 && <Divider inset={64} />}
+                <SettingsRow
+                  icon={g.icon}
+                  tone="info"
+                  title={g.title}
+                  onPress={() => toggleSeccion(g.id)}
+                  right={<Ionicons name={abierta ? 'chevron-up' : 'chevron-down'} size={18} color={theme.textMuted} />}
+                />
+                {abierta && (
+                  <Text style={{ fontSize: 14, color: theme.textSecondary, lineHeight: 21, paddingHorizontal: 16, paddingBottom: 16, paddingLeft: 64 }}>
+                    {g.body}
+                  </Text>
+                )}
+              </View>
+            );
+          })}
+        </Card>
+
+        {/* Datos */}
+        <GroupLabel>{language === 'en' ? 'Local data' : 'Datos locales'}</GroupLabel>
+        <Card padding={0} style={{ marginBottom: 24 }}>
+          <SettingsRow
+            icon="cloud-download-outline"
+            title={t('cargarDemo')}
+            desc={language === 'en' ? 'Populate test plots and diagnostic history' : 'Agrega parcelas y análisis de ejemplo'}
             onPress={handleCargarDemo}
-            activeOpacity={0.8}
-            style={{ padding: 14, borderRadius: 14, backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.cardBorderSubtle, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="cloud-download-outline" size={18} color={rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary} style={{ marginRight: 10 }} />
-              <View>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>{t('cargarDemo')}</Text>
-                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
-                  {language === 'en' ? 'Populate test plots and diagnostic history' : 'Agrega parcelas y análisis de ejemplo para probar'}
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={14} color={theme.textMuted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
+          />
+          <Divider inset={64} />
+          <SettingsRow
+            icon="trash-outline"
+            tone="danger"
+            danger
+            title={t('restablecerDatos')}
+            desc={language === 'en' ? 'Deletes all stored crops and analysis records' : 'Borra todos los lotes y análisis guardados'}
             onPress={handleLimpiarDatos}
-            activeOpacity={0.8}
-            style={{ padding: 14, borderRadius: 14, backgroundColor: theme.dangerBg, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="trash-outline" size={18} color={theme.danger} style={{ marginRight: 10 }} />
-              <View>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: theme.danger }}>{t('restablecerDatos')}</Text>
-                <Text style={{ fontSize: 11, color: theme.danger, opacity: 0.8, marginTop: 2 }}>
-                  {language === 'en' ? 'Deletes all stored crops and analysis records' : 'Borra todos los lotes y análisis guardados'}
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={14} color={theme.danger} />
-          </TouchableOpacity>
-        </View>
+          />
+        </Card>
 
-        {/* 7. BOTÓN CERRAR SESIÓN */}
-        <TouchableOpacity
-          onPress={handleCerrarSesion}
-          activeOpacity={0.85}
-          style={{
-            marginBottom: 20,
-            paddingVertical: 14,
-            borderRadius: 16,
-            backgroundColor: theme.danger,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="log-out-outline" size={18} color="white" />
-            <Text style={{ color: 'white', fontWeight: '800', fontSize: 14, marginLeft: 8 }}>
-              {t('cerrarSesion')}
-            </Text>
-          </View>
-        </TouchableOpacity>
+        <Button label={t('cerrarSesion')} icon="log-out-outline" variant="dangerSoft" onPress={handleCerrarSesion} />
 
-        <Text style={{ textAlign: 'center', fontSize: 11, color: theme.textMuted, marginBottom: 20 }}>
-          PMP Smart · Potato Phytosanitary Intelligence
-        </Text>
+        <Text style={{ textAlign: 'center', fontSize: 12, color: theme.textMuted, marginTop: 20 }}>PMP Smart · v1.0.0</Text>
       </ScrollView>
 
       {/* Editar agricultor */}
