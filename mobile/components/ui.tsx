@@ -467,3 +467,24 @@ export function Chip({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Métrica
+// ---------------------------------------------------------------------------
+export function StatTile({ value, label, tone = 'neutral', icon }: { value: string | number; label: string; tone?: Tone; icon?: IconName }) {
+  const { theme } = useApp();
+  const c = toneColors(theme, tone);
+  return (
+    <Card style={{ flex: 1 }} padding={14}>
+      {icon ? (
+        <View style={{ marginBottom: 10 }}>
+          <IconTile icon={icon} tone={tone} size={30} />
+        </View>
+      ) : null}
+      <Text style={{ fontSize: 24, fontWeight: '800', color: tone === 'neutral' ? theme.text : c.fg, letterSpacing: -0.5 }}>{value}</Text>
+      <Text style={{ fontSize: 12, fontWeight: '500', color: theme.textMuted, marginTop: 2 }} numberOfLines={1}>
+        {label}
+      </Text>
+    </Card>
+  );
+}
+
