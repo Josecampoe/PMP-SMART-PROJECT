@@ -4,7 +4,7 @@ import { View, ActivityIndicator, Text } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { FontAwesome } from '@expo/vector-icons';
-import { AppProvider } from '../context/AppContext';
+import { AppProvider, useApp } from '../context/AppContext';
 import { getAccessToken, authApi, authEvents } from '../lib/api';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
@@ -81,16 +81,26 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function ThemedStack() {
+  const { theme, isDarkMode } = useApp();
+  return (
+    <>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
+      <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg } }}>
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="camera" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="resultado" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      </Stack>
+    </>
+  );
+}
+
 export default function RootLayout() {
   return (
     <AuthGate>
       <AppProvider>
-        <Stack>
-          <Stack.Screen name="auth" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="camera" options={{ headerShown: false }} />
-          <Stack.Screen name="resultado" options={{ headerShown: false }} />
-        </Stack>
+        <ThemedStack />
       </AppProvider>
     </AuthGate>
   );
