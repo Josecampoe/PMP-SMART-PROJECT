@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
 /**
@@ -204,6 +204,14 @@ function Firefly({ x, y, delay, range }: { x: number; y: number; delay: number; 
 
 export default function FieldBackground() {
   const { width: W, height: H } = useWindowDimensions();
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  // Respeta la opción de accesibilidad "reducir movimiento"
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion).catch(() => {});
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => sub.remove();
+  }, []);
 
   const scene = useMemo(() => {
     const rand = seeded(7);
@@ -251,8 +259,8 @@ export default function FieldBackground() {
       <Hill width={W * 2} height={H * 0.34} bottom={-H * 0.08} offsetX={-W * 0.2} color="#14301F" sway={16} duration={7500} />
       <Hill width={W * 2.4} height={H * 0.26} bottom={-H * 0.1} offsetX={-W * 0.7} color="#183A25" sway={24} duration={6000} />
 
-      {scene.fireflies.map(({ key, ...f }) => <Firefly key={key} {...f} />)}
-      {scene.leaves.map(({ key, ...l }) => <Leaf key={key} {...l} screenH={H} />)}
+      {!reduceMotion && scene.fireflies.map(({ key, ...f }) => <Firefly key={key} {...f} />)}
+      {!reduceMotion && scene.leaves.map(({ key, ...l }) => <Leaf key={key} {...l} screenH={H} />)}
     </View>
   );
 }
