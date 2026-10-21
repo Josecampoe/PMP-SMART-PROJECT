@@ -1,21 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Animated,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 import { authApi } from '../../lib/api';
 import type { RolUsuario } from '../../lib/types';
+import FieldBackground from '../../components/FieldBackground';
+import { AUTH, AuthBrand, AuthButton, AuthField } from '../../components/AuthUI';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -26,7 +18,6 @@ export default function RegisterScreen() {
   const [rol, setRol] = useState<RolUsuario>('agricultor');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
@@ -89,221 +80,144 @@ export default function RegisterScreen() {
     }
   };
 
-  const getFieldStyle = (fieldName: string) => ({
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    backgroundColor: focusedField === fieldName ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: focusedField === fieldName ? '#4CAF50' : 'rgba(255,255,255,0.08)',
-    paddingHorizontal: 16,
-  });
+  const roles = [
+    { key: 'agricultor' as RolUsuario, icon: 'pagelines' as const, label: 'Agricultor', sub: 'Gestiono mis cultivos' },
+    { key: 'tecnico' as RolUsuario, icon: 'stethoscope' as const, label: 'Técnico', sub: 'Reviso diagnósticos' },
+  ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0F1A12' }}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 32, paddingVertical: 20 }}
-          keyboardShouldPersistTaps="handled">
-          
-          {/* Back */}
-          <TouchableOpacity
-            onPress={() => router.back()}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              alignSelf: 'flex-start',
-              marginBottom: 28,
-            }}>
-            <FontAwesome name="chevron-left" size={12} color="rgba(200, 230, 201, 0.5)" />
-            <Text style={{ color: 'rgba(200, 230, 201, 0.5)', fontSize: 13, marginLeft: 8, fontWeight: '500' }}>
-              Volver
-            </Text>
-          </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: '#0A1410' }}>
+      <StatusBar style="light" />
+      <FieldBackground />
 
-          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-            {/* Header */}
-            <View style={{ marginBottom: 32 }}>
-              <Text style={{ fontSize: 24, fontWeight: '700', color: '#F1F8E9', letterSpacing: -0.5 }}>
-                Crear cuenta
-              </Text>
-              <Text style={{ fontSize: 13, color: 'rgba(200, 230, 201, 0.5)', marginTop: 6 }}>
-                Elige tu rol para comenzar
-              </Text>
-            </View>
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 26, paddingTop: 12, paddingBottom: 32 }}
+            keyboardShouldPersistTaps="handled">
+            {/* Volver */}
+            <TouchableOpacity
+              onPress={() => router.back()}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="Volver"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: AUTH.fieldBg,
+                borderWidth: 1,
+                borderColor: AUTH.fieldBorder,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 24,
+              }}>
+              <FontAwesome name="chevron-left" size={13} color={AUTH.text} />
+            </TouchableOpacity>
 
-            {/* Rol Selector */}
-            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 28 }}>
-              {[
-                { key: 'agricultor' as RolUsuario, icon: 'pagelines', label: 'Agricultor', sub: 'Gestiono cultivos' },
-                { key: 'tecnico' as RolUsuario, icon: 'stethoscope', label: 'Técnico', sub: 'Reviso diagnósticos' },
-              ].map((item) => {
-                const selected = rol === item.key;
-                return (
-                  <TouchableOpacity
-                    key={item.key}
-                    onPress={() => setRol(item.key)}
-                    activeOpacity={0.75}
-                    style={{
-                      flex: 1,
-                      padding: 16,
-                      borderRadius: 16,
-                      borderWidth: 1.5,
-                      borderColor: selected ? '#4CAF50' : 'rgba(255,255,255,0.08)',
-                      backgroundColor: selected ? 'rgba(76, 175, 80, 0.12)' : 'rgba(255,255,255,0.03)',
-                      alignItems: 'center',
-                    }}>
-                    <View
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 12,
-                        backgroundColor: selected ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255,255,255,0.06)',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: 8,
-                      }}>
-                      <FontAwesome
-                        name={item.icon as any}
-                        size={18}
-                        color={selected ? '#66BB6A' : 'rgba(200, 230, 201, 0.3)'}
-                      />
-                    </View>
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: selected ? '#C8E6C9' : 'rgba(200, 230, 201, 0.4)', marginBottom: 2 }}>
-                      {item.label}
-                    </Text>
-                    <Text style={{ fontSize: 10, color: selected ? 'rgba(200, 230, 201, 0.5)' : 'rgba(200, 230, 201, 0.2)', textAlign: 'center' }}>
-                      {item.sub}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+              {/* Encabezado */}
+              <View style={{ marginBottom: 24 }}>
+                <View style={{ marginBottom: 18 }}>
+                  <AuthBrand />
+                </View>
+                <Text style={{ fontSize: 32, fontWeight: '800', color: AUTH.text, letterSpacing: -0.8, lineHeight: 38 }}>Crea tu cuenta</Text>
+                <Text style={{ fontSize: 15, color: AUTH.textSoft, marginTop: 6 }}>Cuéntanos cómo vas a usar la app.</Text>
+              </View>
 
-            {/* Name */}
-            <View style={{ marginBottom: 16 }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: 'rgba(200, 230, 201, 0.5)', marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-                Nombre completo
-              </Text>
-              <View style={getFieldStyle('nombre')}>
-                <FontAwesome name="user-o" size={14} color={focusedField === 'nombre' ? '#66BB6A' : 'rgba(200, 230, 201, 0.3)'} />
-                <TextInput
+              <View style={{ backgroundColor: AUTH.panel, borderRadius: 24, borderWidth: 1, borderColor: AUTH.panelBorder, padding: 22 }}>
+                {/* Rol */}
+                <Text style={{ color: AUTH.textSoft, fontSize: 13, fontWeight: '500', marginBottom: 8 }}>Soy</Text>
+                <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+                  {roles.map((item) => {
+                    const selected = rol === item.key;
+                    return (
+                      <TouchableOpacity
+                        key={item.key}
+                        onPress={() => setRol(item.key)}
+                        activeOpacity={0.8}
+                        accessibilityState={{ selected }}
+                        style={{
+                          flex: 1,
+                          padding: 14,
+                          borderRadius: 16,
+                          borderWidth: 1.5,
+                          borderColor: selected ? AUTH.lime : AUTH.fieldBorder,
+                          backgroundColor: selected ? 'rgba(165, 207, 95, 0.10)' : AUTH.fieldBg,
+                        }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                          <FontAwesome name={item.icon} size={18} color={selected ? AUTH.lime : AUTH.textFaint} />
+                          <View
+                            style={{
+                              width: 18,
+                              height: 18,
+                              borderRadius: 9,
+                              borderWidth: 1.5,
+                              borderColor: selected ? AUTH.lime : AUTH.textFaint,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}>
+                            {selected && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: AUTH.lime }} />}
+                          </View>
+                        </View>
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: selected ? AUTH.text : AUTH.textSoft }}>{item.label}</Text>
+                        <Text style={{ fontSize: 12, color: AUTH.textFaint, marginTop: 2 }}>{item.sub}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <AuthField
+                  label="Nombre completo"
+                  icon="user-o"
                   value={nombre}
                   onChangeText={setNombre}
-                  onFocus={() => setFocusedField('nombre')}
-                  onBlur={() => setFocusedField(null)}
                   placeholder={rol === 'agricultor' ? 'Juan Pérez' : 'Ing. María López'}
-                  placeholderTextColor="rgba(200, 230, 201, 0.25)"
                   autoCapitalize="words"
-                  style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 14, color: '#E8F5E9', fontSize: 15 }}
                 />
-              </View>
-            </View>
-
-            {/* Email */}
-            <View style={{ marginBottom: 16 }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: 'rgba(200, 230, 201, 0.5)', marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-                Correo electrónico
-              </Text>
-              <View style={getFieldStyle('email')}>
-                <FontAwesome name="at" size={14} color={focusedField === 'email' ? '#66BB6A' : 'rgba(200, 230, 201, 0.3)'} />
-                <TextInput
+                <AuthField
+                  label="Correo electrónico"
+                  icon="envelope-o"
                   value={email}
                   onChangeText={setEmail}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                  placeholder="tu@correo.com"
-                  placeholderTextColor="rgba(200, 230, 201, 0.25)"
+                  placeholder="nombre@finca.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
-                  style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 14, color: '#E8F5E9', fontSize: 15 }}
                 />
-              </View>
-            </View>
-
-            {/* Password */}
-            <View style={{ marginBottom: 16 }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: 'rgba(200, 230, 201, 0.5)', marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-                Contraseña
-              </Text>
-              <View style={getFieldStyle('password')}>
-                <FontAwesome name="lock" size={15} color={focusedField === 'password' ? '#66BB6A' : 'rgba(200, 230, 201, 0.3)'} />
-                <TextInput
+                <AuthField
+                  label="Contraseña"
+                  icon="lock"
                   value={password}
                   onChangeText={setPassword}
-                  onFocus={() => setFocusedField('password')}
-                  onBlur={() => setFocusedField(null)}
                   placeholder="Mínimo 6 caracteres"
-                  placeholderTextColor="rgba(200, 230, 201, 0.25)"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
-                  style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 14, color: '#E8F5E9', fontSize: 15 }}
+                  secureToggle={{ visible: showPassword, onToggle: () => setShowPassword(!showPassword) }}
                 />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={16} color="rgba(200, 230, 201, 0.4)" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Confirm Password */}
-            <View style={{ marginBottom: 8 }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: 'rgba(200, 230, 201, 0.5)', marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-                Confirmar contraseña
-              </Text>
-              <View style={getFieldStyle('confirm')}>
-                <FontAwesome name="lock" size={15} color={focusedField === 'confirm' ? '#66BB6A' : 'rgba(200, 230, 201, 0.3)'} />
-                <TextInput
+                <AuthField
+                  label="Confirmar contraseña"
+                  icon="lock"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  onFocus={() => setFocusedField('confirm')}
-                  onBlur={() => setFocusedField(null)}
                   placeholder="Repite tu contraseña"
-                  placeholderTextColor="rgba(200, 230, 201, 0.25)"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
-                  style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 14, color: '#E8F5E9', fontSize: 15 }}
                 />
+
+                <AuthButton label="Crear cuenta" onPress={handleRegister} loading={isLoading} />
               </View>
-            </View>
 
-            {/* Register Button */}
-            <TouchableOpacity
-              onPress={handleRegister}
-              disabled={isLoading}
-              activeOpacity={0.85}
-              style={{
-                backgroundColor: '#388E3C',
-                paddingVertical: 16,
-                borderRadius: 16,
-                alignItems: 'center',
-                marginTop: 28,
-                opacity: isLoading ? 0.7 : 1,
-              }}>
-              {isLoading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={{ color: 'white', fontWeight: '600', fontSize: 15 }}>
-                  Crear cuenta
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Login Link */}
-            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 28, marginBottom: 20 }}>
-              <Text style={{ color: 'rgba(200, 230, 201, 0.5)', fontSize: 13 }}>¿Ya tienes cuenta? </Text>
-              <TouchableOpacity onPress={() => router.replace('/auth/login')}>
-                <Text style={{ color: '#66BB6A', fontSize: 13, fontWeight: '600' }}>
-                  Inicia sesión
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+              {/* Ir al login */}
+              <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24 }}>
+                <Text style={{ color: AUTH.textSoft, fontSize: 14 }}>¿Ya tienes cuenta? </Text>
+                <TouchableOpacity onPress={() => router.replace('/auth/login')} hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}>
+                  <Text style={{ color: AUTH.wheat, fontSize: 14, fontWeight: '700' }}>Inicia sesión</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
