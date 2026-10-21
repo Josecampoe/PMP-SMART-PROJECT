@@ -166,33 +166,15 @@ export default function Historial() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
-      {/* 1. ENCABEZADO */}
-      <View style={{ backgroundColor: theme.card, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: theme.cardBorder }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: theme.text }}>
-              {t('historialTitulo')}
-            </Text>
-            <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
-              {t('historialSubtitulo')}
-            </Text>
-          </View>
-          {rolActivo === 'agricultor' && (
-            <TouchableOpacity
-              onPress={() => router.push('/camera')}
-              style={{
-                backgroundColor: theme.primary,
-                width: 38,
-                height: 38,
-                borderRadius: 19,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <Ionicons name="camera" size={18} color="white" />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+      <ScreenHeader
+        title={t('historialTitulo')}
+        subtitle={t('historialSubtitulo')}
+        right={
+          rolActivo === 'agricultor' ? (
+            <IconButton icon="camera" filled size={44} onPress={() => router.push('/camera')} accessibilityLabel={t('analizarPlanta')} />
+          ) : undefined
+        }
+      />
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         {/* 2. BUSCADOR */}
