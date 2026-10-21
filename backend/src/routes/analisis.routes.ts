@@ -33,7 +33,7 @@ router.post('/procesar', async (req: AuthenticatedRequest, res: Response) => {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
 
     let cleanBase64 = imageBase64;
     let mimeType = 'image/jpeg';
