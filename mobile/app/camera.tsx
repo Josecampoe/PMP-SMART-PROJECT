@@ -79,7 +79,7 @@ export default function CameraScreen() {
       }
     } catch (error) {
       console.error('Error al abrir galería:', error);
-      Alert.alert('Error', 'No se pudo abrir la galería de imágenes.');
+      Alert.alert('Error', language === 'en' ? 'Could not open the image gallery.' : 'No se pudo abrir la galería de imágenes.');
     }
   };
 
@@ -111,7 +111,7 @@ export default function CameraScreen() {
       }
     } catch (error) {
       console.error('Error al capturar foto:', error);
-      Alert.alert('Error', 'No se pudo capturar la foto. Intenta de nuevo.');
+      Alert.alert('Error', language === 'en' ? 'Could not take the photo. Try again.' : 'No se pudo capturar la foto. Intenta de nuevo.');
       if (cameraRef.current?.resumePreview) {
         await cameraRef.current.resumePreview();
       }
@@ -134,7 +134,7 @@ export default function CameraScreen() {
 
   const handleCrearLoteRapido = () => {
     if (!nuevoLoteNombre.trim()) {
-      Alert.alert('Campo requerido', 'Ingresa el nombre del lote.');
+      Alert.alert(language === 'en' ? 'Required field' : 'Campo requerido', language === 'en' ? 'Enter the plot name.' : 'Ingresa el nombre del lote.');
       return;
     }
     const ha = parseFloat(nuevoLoteHectareas.replace(',', '.')) || 1.0;
