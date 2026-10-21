@@ -151,66 +151,40 @@ export default function Inicio() {
     );
   };
 
+  // -------------------------------------------------------------------------
+  // Encabezado común
+  // -------------------------------------------------------------------------
+  const Header = (
+    <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Ionicons name={rolActivo === 'agricultor' ? 'leaf' : 'shield-checkmark'} size={18} color={theme.primary} />
+        <Text style={{ fontSize: 16, fontWeight: '800', color: theme.text, marginLeft: 7, letterSpacing: -0.2 }}>
+          PMP <Text style={{ color: theme.primary }}>Smart</Text>
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        onPress={() => router.push('/(tabs)/perfil')}
+        activeOpacity={0.75}
+        accessibilityLabel={language === 'en' ? 'Open profile' : 'Abrir perfil'}
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: theme.primaryLight,
+          borderWidth: 1,
+          borderColor: theme.primaryLightBorder,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <Text style={{ fontSize: 15, fontWeight: '800', color: theme.primary }}>{nombre.charAt(0).toUpperCase()}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
-      {/* Header */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 14, backgroundColor: theme.bg }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* Logo & Brand */}
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 12,
-                backgroundColor: rolActivo === 'tecnico' ? (isDarkMode ? 'rgba(59, 130, 246, 0.18)' : '#EFF6FF') : theme.primaryLight,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 10,
-              }}>
-              <Ionicons
-                name={rolActivo === 'agricultor' ? 'leaf' : 'medical'}
-                size={18}
-                color={rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary}
-              />
-            </View>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: theme.text, letterSpacing: -0.3 }}>
-              PMP Smart
-            </Text>
-          </View>
-
-          {/* User Profile Chip (El selector de modo se gestiona en la pestaña Perfil) */}
-          <TouchableOpacity
-            onPress={() => router.push('/(tabs)/perfil')}
-            activeOpacity={0.7}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: theme.card,
-              paddingHorizontal: 12,
-              paddingVertical: 7,
-              borderRadius: 20,
-              borderWidth: 1,
-              borderColor: theme.cardBorder,
-            }}>
-            <View
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 12,
-                backgroundColor: rolActivo === 'tecnico' ? (isDarkMode ? 'rgba(59, 130, 246, 0.25)' : '#DBEAFE') : theme.primaryLight,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 6,
-              }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#1D4ED8') : theme.primary }}>
-                {nombre.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: theme.textSecondary }}>{nombre}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      {Header}
 
       {/* Content */}
       <ScrollView
