@@ -203,45 +203,11 @@ export default function PerfilScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
-      {/* 1. ENCABEZADO */}
-      <View style={{ backgroundColor: theme.card, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: theme.cardBorder }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: theme.text }}>
-              {t('perfilTitulo')}
-            </Text>
-            <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
-              {rolActivo === 'agricultor' ? t('rolAgricultor') : t('rolTecnico')}
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => {
-              if (rolActivo === 'agricultor') {
-                setNombreAgr(perfilAgricultor?.nombre || '');
-                setFincaAgr(perfilAgricultor?.fincaPrincipal || '');
-                setUbicacionAgr(perfilAgricultor?.ubicacion || '');
-                setTelefonoAgr(perfilAgricultor?.telefono || '');
-                setEmailAgr(perfilAgricultor?.email || '');
-                setModalEditAgr(true);
-              } else {
-                setNombreTec(perfilTecnico?.nombre || '');
-                setRegTec(perfilTecnico?.registroProfesional || '');
-                setEspTec(perfilTecnico?.especialidad || '');
-                setEntidadTec(perfilTecnico?.entidad || '');
-                setTelefonoTec(perfilTecnico?.telefono || '');
-                setEmailTec(perfilTecnico?.email || '');
-                setModalEditTec(true);
-              }
-            }}
-            style={{
-              backgroundColor: rolActivo === 'tecnico' ? (isDarkMode ? 'rgba(59, 130, 246, 0.2)' : '#EFF6FF') : theme.primaryLight,
-              padding: 10,
-              borderRadius: 14,
-            }}>
-            <Ionicons name="pencil" size={16} color={rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ScreenHeader
+        title={language === 'en' ? 'Profile' : 'Perfil'}
+        subtitle={t('perfilSubtitulo')}
+        right={<IconButton icon="create-outline" size={44} onPress={abrirEditor} accessibilityLabel={t('editarPerfil')} />}
+      />
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         {/* 2. CARD DE APARIENCIA E IDIOMA (DARK MODE & ENGLISH) */}
