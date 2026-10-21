@@ -60,3 +60,28 @@ function Glow({
   );
 }
 
+// ---------- Estrellas ----------
+function Star({ x, y, size, delay }: { x: number; y: number; size: number; delay: number }) {
+  const t = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const a = loop(t, 1800 + delay / 3, delay);
+    a.start();
+    return () => a.stop();
+  }, []);
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        left: x,
+        top: y,
+        width: size,
+        height: size,
+        borderRadius: size,
+        backgroundColor: '#F4F1DE',
+        opacity: t.interpolate({ inputRange: [0, 1], outputRange: [0.15, 0.8] }),
+      }}
+    />
+  );
+}
+
