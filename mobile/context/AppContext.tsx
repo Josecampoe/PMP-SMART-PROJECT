@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   perfilApi,
@@ -156,7 +157,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Preferencias de apariencia e idioma: se restauran siempre, con o sin sesión
     AsyncStorage.multiGet([CACHE_KEYS.THEME_MODE, CACHE_KEYS.LANGUAGE])
       .then(([[, storedTheme], [, storedLang]]) => {
-        if (storedTheme === 'dark') setIsDarkMode(true);
+        if (storedTheme === 'dark' || storedTheme === 'light') {
+          setIsDarkMode(storedTheme === 'dark');
+        } else {
+          // Sin preferencia guardada: usar el tema del sistema
+          setIsDarkMode(Appearance.getColorScheme() === 'dark');
+        }
         if (storedLang === 'es' || storedLang === 'en') setLanguageState(storedLang);
       })
       .catch(() => {});
