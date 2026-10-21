@@ -533,3 +533,30 @@ export function Divider({ inset = 0 }: { inset?: number }) {
   return <View style={{ height: 1, backgroundColor: theme.cardBorderSubtle, marginLeft: inset }} />;
 }
 
+// ---------------------------------------------------------------------------
+// Estado vacío
+// ---------------------------------------------------------------------------
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon: IconName;
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+}) {
+  const { theme } = useApp();
+  return (
+    <Card padding={24} style={{ alignItems: 'center' }}>
+      <IconTile icon={icon} size={52} />
+      <Text style={{ fontSize: 17, fontWeight: '700', color: theme.text, textAlign: 'center', marginTop: 14 }}>{title}</Text>
+      {description ? (
+        <Text style={{ fontSize: 14, color: theme.textMuted, textAlign: 'center', lineHeight: 20, marginTop: 6 }}>{description}</Text>
+      ) : null}
+      {action ? <View style={{ marginTop: 18, alignSelf: 'stretch' }}>{action}</View> : null}
+    </Card>
+  );
+}
+
