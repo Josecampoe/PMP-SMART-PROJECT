@@ -528,3 +528,8 @@ export function SettingsRow({
   );
 }
 
+export function Divider({ inset = 0 }: { inset?: number }) {
+  const { theme } = useApp();
+  return <View style={{ height: 1, backgroundColor: theme.cardBorderSubtle, marginLeft: inset }} />;
+}
+
