@@ -10,11 +10,25 @@ import {
   Platform,
   ScrollView,
   Animated,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { FontAwesome } from '@expo/vector-icons';
 import { authApi } from '../../lib/api';
+import FieldBackground from '../../components/FieldBackground';
+
+const C = {
+  text: '#F3F1E7',
+  textSoft: 'rgba(243, 241, 231, 0.68)',
+  textFaint: 'rgba(243, 241, 231, 0.4)',
+  lime: '#A5CF5F',
+  limeText: '#12230F',
+  wheat: '#E2B866',
+  fieldBg: 'rgba(255, 255, 255, 0.05)',
+  fieldBorder: 'rgba(255, 255, 255, 0.10)',
+};
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -24,29 +38,15 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  // Animations
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const logoScale = useRef(new Animated.Value(0.8)).current;
+  // Entrada escalonada: encabezado y luego el formulario
+  const headIn = useRef(new Animated.Value(0)).current;
+  const formIn = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.spring(logoScale, {
-        toValue: 1,
-        friction: 8,
-        tension: 40,
-        useNativeDriver: true,
-      }),
+    const ease = Easing.out(Easing.cubic);
+    Animated.stagger(140, [
+      Animated.timing(headIn, { toValue: 1, duration: 700, easing: ease, useNativeDriver: true }),
+      Animated.timing(formIn, { toValue: 1, duration: 700, easing: ease, useNativeDriver: true }),
     ]).start();
   }, []);
 
@@ -68,182 +68,140 @@ export default function LoginScreen() {
     router.replace('/(tabs)');
   };
 
-  const getFieldStyle = (fieldName: string) => ({
+  const fieldStyle = (name: string) => ({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    backgroundColor: focusedField === fieldName ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: focusedField === fieldName ? '#4CAF50' : 'rgba(255,255,255,0.08)',
+    backgroundColor: focusedField === name ? 'rgba(255,255,255,0.09)' : C.fieldBg,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: focusedField === name ? C.lime : C.fieldBorder,
     paddingHorizontal: 16,
   });
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0F1A12' }}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 32 }}
-          keyboardShouldPersistTaps="handled">
-          
-          {/* Logo */}
-          <Animated.View
-            style={{
-              alignItems: 'center',
-              marginBottom: 48,
-              opacity: fadeAnim,
-              transform: [{ scale: logoScale }],
-            }}>
-            <View
-              style={{
-                width: 72,
-                height: 72,
-                borderRadius: 20,
-                backgroundColor: 'rgba(76, 175, 80, 0.15)',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 24,
-              }}>
-              <FontAwesome name="leaf" size={32} color="#66BB6A" />
-            </View>
-            <Text
-              style={{
-                fontSize: 26,
-                fontWeight: '700',
-                color: '#F1F8E9',
-                letterSpacing: -0.5,
-              }}>
-              PMP Smart
-            </Text>
-            <Text
-              style={{
-                fontSize: 13,
-                color: 'rgba(200, 230, 201, 0.7)',
-                marginTop: 8,
-                textAlign: 'center',
-                lineHeight: 19,
-              }}>
-              Monitoreo fitosanitario para{'\n'}cultivos de papa
-            </Text>
-          </Animated.View>
+  const rise = (v: Animated.Value, from = 24) => ({
+    opacity: v,
+    transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [from, 0] }) }],
+  });
 
-          {/* Form */}
-          <Animated.View
-            style={{
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            }}>
-            {/* Email */}
-            <View style={{ marginBottom: 18 }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: 'rgba(200, 230, 201, 0.5)', marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-                Correo
+  return (
+    <View style={{ flex: 1, backgroundColor: '#0A1410' }}>
+      <StatusBar style="light" />
+      <FieldBackground />
+
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 26, paddingVertical: 32 }}
+            keyboardShouldPersistTaps="handled">
+
+            {/* Encabezado */}
+            <Animated.View style={[{ marginBottom: 30 }, rise(headIn, 16)]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 26 }}>
+                <FontAwesome name="leaf" size={16} color={C.lime} />
+                <Text style={{ color: C.text, fontSize: 15, fontWeight: '700', marginLeft: 8 }}>
+                  PMP <Text style={{ color: C.lime }}>Smart</Text>
+                </Text>
+              </View>
+
+              <Text style={{ color: C.text, fontSize: 34, fontWeight: '800', lineHeight: 40, letterSpacing: -0.8 }}>
+                Hola de nuevo
               </Text>
-              <View style={getFieldStyle('email')}>
-                <FontAwesome name="at" size={14} color={focusedField === 'email' ? '#66BB6A' : 'rgba(200, 230, 201, 0.3)'} />
+              <Text style={{ color: C.textSoft, fontSize: 15, marginTop: 8, lineHeight: 22 }}>
+                Entra para ver cómo van tus parcelas de papa.
+              </Text>
+            </Animated.View>
+
+            {/* Formulario */}
+            <Animated.View
+              style={[
+                {
+                  backgroundColor: 'rgba(8, 18, 12, 0.72)',
+                  borderRadius: 24,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.07)',
+                  padding: 22,
+                },
+                rise(formIn),
+              ]}>
+              <Text style={{ color: C.textSoft, fontSize: 13, fontWeight: '500', marginBottom: 8 }}>
+                Correo electrónico
+              </Text>
+              <View style={[fieldStyle('email'), { marginBottom: 18 }]}>
+                <FontAwesome name="envelope-o" size={14} color={focusedField === 'email' ? C.lime : C.textFaint} />
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
-                  placeholder="tu@correo.com"
-                  placeholderTextColor="rgba(200, 230, 201, 0.25)"
+                  placeholder="nombre@finca.com"
+                  placeholderTextColor="rgba(243, 241, 231, 0.28)"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
-                  style={{
-                    flex: 1,
-                    paddingVertical: 15,
-                    paddingHorizontal: 14,
-                    color: '#E8F5E9',
-                    fontSize: 15,
-                  }}
+                  style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 12, color: C.text, fontSize: 15 }}
                 />
               </View>
-            </View>
 
-            {/* Password */}
-            <View style={{ marginBottom: 8 }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: 'rgba(200, 230, 201, 0.5)', marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+              <Text style={{ color: C.textSoft, fontSize: 13, fontWeight: '500', marginBottom: 8 }}>
                 Contraseña
               </Text>
-              <View style={getFieldStyle('password')}>
-                <FontAwesome name="lock" size={15} color={focusedField === 'password' ? '#66BB6A' : 'rgba(200, 230, 201, 0.3)'} />
+              <View style={fieldStyle('password')}>
+                <FontAwesome name="lock" size={16} color={focusedField === 'password' ? C.lime : C.textFaint} />
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
-                  placeholder="••••••••"
-                  placeholderTextColor="rgba(200, 230, 201, 0.25)"
+                  placeholder="Tu contraseña"
+                  placeholderTextColor="rgba(243, 241, 231, 0.28)"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
-                  style={{
-                    flex: 1,
-                    paddingVertical: 15,
-                    paddingHorizontal: 14,
-                    color: '#E8F5E9',
-                    fontSize: 15,
-                  }}
+                  style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 12, color: C.text, fontSize: 15 }}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <FontAwesome
-                    name={showPassword ? 'eye-slash' : 'eye'}
-                    size={16}
-                    color="rgba(200, 230, 201, 0.4)"
-                  />
+                  <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={16} color={C.textFaint} />
                 </TouchableOpacity>
               </View>
-            </View>
 
-            {/* Login Button */}
-            <TouchableOpacity
-              onPress={handleLogin}
-              disabled={isLoading}
-              activeOpacity={0.85}
-              style={{
-                backgroundColor: '#388E3C',
-                paddingVertical: 16,
-                borderRadius: 16,
-                alignItems: 'center',
-                marginTop: 28,
-                opacity: isLoading ? 0.7 : 1,
-              }}>
-              {isLoading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={{ color: 'white', fontWeight: '600', fontSize: 15 }}>
-                  Iniciar Sesión
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Register Link */}
-            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 32 }}>
-              <Text style={{ color: 'rgba(200, 230, 201, 0.5)', fontSize: 13 }}>¿Sin cuenta? </Text>
-              <TouchableOpacity onPress={() => router.push('/auth/register')}>
-                <Text style={{ color: '#66BB6A', fontSize: 13, fontWeight: '600' }}>
-                  Crear una
-                </Text>
+              <TouchableOpacity
+                onPress={handleLogin}
+                disabled={isLoading}
+                activeOpacity={0.85}
+                style={{
+                  backgroundColor: C.lime,
+                  paddingVertical: 16,
+                  borderRadius: 14,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  marginTop: 26,
+                  opacity: isLoading ? 0.75 : 1,
+                }}>
+                {isLoading ? (
+                  <ActivityIndicator color={C.limeText} />
+                ) : (
+                  <>
+                    <Text style={{ color: C.limeText, fontWeight: '700', fontSize: 16 }}>Entrar</Text>
+                    <FontAwesome name="arrow-right" size={14} color={C.limeText} style={{ marginLeft: 10 }} />
+                  </>
+                )}
               </TouchableOpacity>
-            </View>
-          </Animated.View>
+            </Animated.View>
 
-          {/* Footer */}
-          <Text
-            style={{
-              textAlign: 'center',
-              color: 'rgba(200, 230, 201, 0.2)',
-              fontSize: 10,
-              marginTop: 48,
-              lineHeight: 15,
-            }}>
-            PMP Smart © 2026
-          </Text>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            {/* Registro */}
+            <Animated.View style={[{ flexDirection: 'row', justifyContent: 'center', marginTop: 26 }, { opacity: formIn }]}>
+              <Text style={{ color: C.textSoft, fontSize: 14 }}>¿Primera vez aquí? </Text>
+              <TouchableOpacity onPress={() => router.push('/auth/register')} hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}>
+                <Text style={{ color: C.wheat, fontSize: 14, fontWeight: '700' }}>Crea tu cuenta</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
