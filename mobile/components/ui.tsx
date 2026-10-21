@@ -333,3 +333,13 @@ export function SectionTitle({
   );
 }
 
+/** Etiqueta pequeña para agrupar opciones (estilo ajustes) */
+export function GroupLabel({ children }: { children: string }) {
+  const { theme } = useApp();
+  return (
+    <Text style={{ fontSize: 13, fontWeight: '600', color: theme.textMuted, marginBottom: 8, marginLeft: 4, marginTop: 4 }}>
+      {children}
+    </Text>
+  );
+}
+
