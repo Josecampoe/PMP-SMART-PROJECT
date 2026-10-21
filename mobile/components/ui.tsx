@@ -219,3 +219,45 @@ export function Button({
   );
 }
 
+/** Botón redondo solo con icono (acciones de encabezado) */
+export function IconButton({
+  icon,
+  onPress,
+  tone = 'neutral',
+  filled,
+  accessibilityLabel,
+  size = 40,
+}: {
+  icon: IconName;
+  onPress?: () => void;
+  tone?: Tone;
+  filled?: boolean;
+  accessibilityLabel?: string;
+  size?: number;
+}) {
+  const { theme } = useApp();
+  const c = toneColors(theme, tone);
+  const bg = filled ? theme.primary : tone === 'neutral' ? theme.card : c.bg;
+  const fg = filled ? theme.onPrimary : tone === 'neutral' ? theme.text : c.fg;
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.75}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: bg,
+        borderWidth: tone === 'neutral' && !filled ? 1 : 0,
+        borderColor: theme.cardBorder,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+      <Ionicons name={icon} size={size * 0.45} color={fg} />
+    </TouchableOpacity>
+  );
+}
+
