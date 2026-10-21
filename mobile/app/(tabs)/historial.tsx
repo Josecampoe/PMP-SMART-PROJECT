@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  Modal,
-  TextInput,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,7 +24,6 @@ export default function Historial() {
     guardarRevisionTecnica,
     perfilTecnico,
     theme,
-    isDarkMode,
     language,
     t,
   } = useApp();
@@ -165,7 +155,7 @@ export default function Historial() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
       <ScreenHeader
         title={t('historialTitulo')}
         subtitle={t('historialSubtitulo')}
@@ -176,135 +166,94 @@ export default function Historial() {
         }
       />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-        {/* 2. BUSCADOR */}
-        <View style={{ backgroundColor: theme.card, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: theme.cardBorder, marginBottom: 12 }}>
-          <Ionicons name="search" size={16} color={theme.textMuted} style={{ marginRight: 8 }} />
-          <TextInput
-            value={busqueda}
-            onChangeText={setBusqueda}
-            placeholder={language === 'en' ? 'Search by plot, symptom, diagnosis...' : 'Buscar por lote, síntoma o dictamen...'}
-            placeholderTextColor={theme.textMuted}
-            style={{ flex: 1, fontSize: 13, color: theme.text, padding: 0 }}
-          />
-          {busqueda.length > 0 && (
-            <TouchableOpacity onPress={() => setBusqueda('')}>
-              <Ionicons name="close-circle" size={16} color={theme.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        {/* Buscador */}
+        <Field
+          icon="search"
+          value={busqueda}
+          onChangeText={setBusqueda}
+          placeholder={language === 'en' ? 'Search plot, symptom or diagnosis' : 'Buscar lote, síntoma o dictamen'}
+          returnKeyType="search"
+          style={{ marginBottom: 12 }}
+          inputStyle={{ paddingVertical: 11 }}
+        />
 
-        {/* 3. FILTROS */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row', marginBottom: 14 }}>
-          {[
-            { id: 'todos', label: `${t('filtroTodos')} (${analisisHistorial.length})` },
-            { id: 'alerta', label: `⚠️ ${t('filtroAlerta')}` },
-            { id: 'revisado', label: `✓ ${t('estadoRevisado')}` },
-            { id: 'pendiente', label: `⏳ ${t('filtroPendientes')}` },
-          ].map((f) => (
-            <TouchableOpacity
-              key={f.id}
-              onPress={() => setFiltro(f.id)}
-              style={{
-                paddingHorizontal: 14,
-                paddingVertical: 7,
-                borderRadius: 20,
-                backgroundColor: filtro === f.id ? theme.primary : theme.card,
-                borderWidth: 1,
-                borderColor: filtro === f.id ? theme.primary : theme.cardBorder,
-                marginRight: 8,
-              }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: filtro === f.id ? '#FFFFFF' : theme.textSecondary }}>
-                {f.label}
-              </Text>
-            </TouchableOpacity>
+        {/* Filtros */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 16, marginHorizontal: -20 }}
+          contentContainerStyle={{ paddingHorizontal: 20 }}>
+          {filtros.map((f) => (
+            <Chip key={f.id} label={f.label} icon={'icon' in f ? f.icon : undefined} count={'count' in f ? f.count : undefined} selected={filtro === f.id} onPress={() => setFiltro(f.id)} />
           ))}
         </ScrollView>
 
-        {/* 4. LISTADO DE ANÁLISIS */}
+        {/* Listado */}
         {itemsFiltrados.length === 0 ? (
-          <View style={{ backgroundColor: theme.card, borderRadius: 24, padding: 32, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.cardBorder, marginTop: 10 }}>
-            <Ionicons name="clipboard-outline" size={36} color={theme.textMuted} style={{ marginBottom: 10 }} />
-            <Text style={{ fontSize: 16, fontWeight: '800', color: theme.text, textAlign: 'center', marginBottom: 6 }}>
-              {t('sinAnalisis')}
-            </Text>
-            <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginBottom: 16 }}>
-              {t('sinAnalisisDesc')}
-            </Text>
-            {rolActivo === 'agricultor' && (
-              <TouchableOpacity
-                onPress={() => router.push('/camera')}
-                style={{ backgroundColor: theme.primary, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12 }}>
-                <Text style={{ color: 'white', fontSize: 12, fontWeight: '700' }}>
-                  + {t('analizarPlanta')}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <EmptyState
+            icon="document-text-outline"
+            title={busqueda.trim() || filtro !== 'todos' ? (language === 'en' ? 'No matching results' : 'Sin resultados') : t('sinAnalisis')}
+            description={
+              busqueda.trim() || filtro !== 'todos'
+                ? language === 'en'
+                  ? 'Try another search or filter.'
+                  : 'Prueba con otra búsqueda o filtro.'
+                : t('sinAnalisisDesc')
+            }
+            action={
+              rolActivo === 'agricultor' && !busqueda.trim() && filtro === 'todos' ? (
+                <Button label={t('analizarPlanta')} icon="camera-outline" onPress={() => router.push('/camera')} />
+              ) : undefined
+            }
+          />
         ) : (
           itemsFiltrados.map((item) => {
             const esAlerta = item.estado === 'alerta' || Boolean(item.diagnostico?.includes('PMP'));
             return (
-              <TouchableOpacity
-                key={item.id}
-                onPress={() => setSelectedAnalisis(item)}
-                activeOpacity={0.85}
-                style={{
-                  backgroundColor: theme.card,
-                  borderRadius: 18,
-                  padding: 12,
-                  borderWidth: 1,
-                  borderColor: theme.cardBorder,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginBottom: 10,
-                }}>
-                <Image
-                  source={{ uri: item.imageUri || 'https://images.unsplash.com/photo-1555431189-0ab279e2be3a' }}
-                  style={{ width: 70, height: 70, borderRadius: 12, backgroundColor: theme.cardBorder }}
-                  resizeMode="cover"
-                />
+              <Card key={item.id} onPress={() => setSelectedAnalisis(item)} padding={12} style={{ marginBottom: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View>
+                    <Image
+                      source={{ uri: item.imageUri || 'https://images.unsplash.com/photo-1555431189-0ab279e2be3a' }}
+                      style={{ width: 68, height: 68, borderRadius: 14, backgroundColor: theme.surfaceAlt }}
+                      resizeMode="cover"
+                    />
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: 5,
+                        left: 5,
+                        width: 12,
+                        height: 12,
+                        borderRadius: 6,
+                        borderWidth: 2,
+                        borderColor: theme.card,
+                        backgroundColor: esAlerta ? theme.warning : theme.primary,
+                      }}
+                    />
+                  </View>
 
-                <View style={{ flex: 1, marginLeft: 12, justifyContent: 'center' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: esAlerta ? theme.warning : theme.primary }}>
+                  <View style={{ flex: 1, marginLeft: 14 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text }} numberOfLines={1}>
                       {item.diagnostico || (language === 'en' ? 'Diagnosis' : 'Diagnóstico')}
                     </Text>
-                    <Text style={{ fontSize: 10, color: theme.textMuted, fontWeight: '600' }}>
-                      {item.fecha || ''}
+                    <Text style={{ fontSize: 13, color: theme.textSecondary, marginTop: 2 }} numberOfLines={1}>
+                      {item.cultivoNombre || (language === 'en' ? 'Field plot' : 'Parcela')}
                     </Text>
-                  </View>
-
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: theme.text, marginBottom: 4 }}>
-                    {item.cultivoNombre || (language === 'en' ? 'Field Plot' : 'Parcela')}
-                  </Text>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <View style={{ backgroundColor: theme.inputBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                      <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary }}>
-                        {item.confianza || 90}% IA
-                      </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 6 }}>
+                      <Text style={{ fontSize: 12, color: theme.textMuted }}>{item.fecha || ''}</Text>
+                      {estadoRevisionBadge(item)}
                     </View>
-
-                    {item.estadoRevision === 'revisado' && (
-                      <View style={{ backgroundColor: theme.primaryLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '700', color: theme.primary }}>
-                          ✓ {t('estadoRevisado')}
-                        </Text>
-                      </View>
-                    )}
-                    {item.estadoRevision === 'pendiente' && (
-                      <View style={{ backgroundColor: theme.warningBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '700', color: theme.warning }}>
-                          ⏳ {t('estadoPendiente')}
-                        </Text>
-                      </View>
-                    )}
                   </View>
-                </View>
 
-                <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
-              </TouchableOpacity>
+                  <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                </View>
+              </Card>
             );
           })
         )}
