@@ -424,3 +424,46 @@ export function Field({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Chip seleccionable
+// ---------------------------------------------------------------------------
+export function Chip({
+  label,
+  selected,
+  onPress,
+  icon,
+  count,
+}: {
+  label: string;
+  selected?: boolean;
+  onPress?: () => void;
+  icon?: IconName;
+  count?: number;
+}) {
+  const { theme } = useApp();
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 999,
+        backgroundColor: selected ? theme.text : theme.card,
+        borderWidth: 1,
+        borderColor: selected ? theme.text : theme.cardBorder,
+        marginRight: 8,
+      }}>
+      {icon ? <Ionicons name={icon} size={14} color={selected ? theme.bg : theme.textSecondary} style={{ marginRight: 6 }} /> : null}
+      <Text style={{ fontSize: 13, fontWeight: '600', color: selected ? theme.bg : theme.textSecondary }}>{label}</Text>
+      {typeof count === 'number' ? (
+        <Text style={{ fontSize: 13, fontWeight: '600', color: selected ? theme.bg : theme.textMuted, marginLeft: 6, opacity: 0.8 }}>
+          {count}
+        </Text>
+      ) : null}
+    </TouchableOpacity>
+  );
+}
+
