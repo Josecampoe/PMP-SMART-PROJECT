@@ -31,3 +31,56 @@ export function AuthBrand() {
   );
 }
 
+export function AuthField({
+  label,
+  icon,
+  secureToggle,
+  style,
+  ...inputProps
+}: TextInputProps & {
+  label: string;
+  icon: React.ComponentProps<typeof FontAwesome>['name'];
+  /** Muestra el botón de ver/ocultar contraseña */
+  secureToggle?: { visible: boolean; onToggle: () => void };
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <View style={[{ marginBottom: 16 }, style as any]}>
+      <Text style={{ color: AUTH.textSoft, fontSize: 13, fontWeight: '500', marginBottom: 8 }}>{label}</Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: focused ? AUTH.fieldBgFocus : AUTH.fieldBg,
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: focused ? AUTH.lime : AUTH.fieldBorder,
+          paddingHorizontal: 16,
+        }}>
+        <FontAwesome name={icon} size={15} color={focused ? AUTH.lime : AUTH.textFaint} style={{ width: 16, textAlign: 'center' }} />
+        <TextInput
+          placeholderTextColor={AUTH.placeholder}
+          {...inputProps}
+          onFocus={(e) => {
+            setFocused(true);
+            inputProps.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            inputProps.onBlur?.(e);
+          }}
+          style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 12, color: AUTH.text, fontSize: 15 }}
+        />
+        {secureToggle ? (
+          <TouchableOpacity
+            onPress={secureToggle.onToggle}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel={secureToggle.visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+            <FontAwesome name={secureToggle.visible ? 'eye-slash' : 'eye'} size={16} color={AUTH.textFaint} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
