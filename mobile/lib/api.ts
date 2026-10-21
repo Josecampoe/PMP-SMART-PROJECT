@@ -371,6 +371,14 @@ export const cultivosApi = {
 export const analisisApi = {
   // Procesar imagen directamente con Gemini AI (sin depender de un backend o servidor)
   async procesar(imageUri: string, language: 'es' | 'en' = 'es'): Promise<ApiResponse<any>> {
+    if (!GEMINI_API_KEY) {
+      return {
+        success: false,
+        error: language === 'en'
+          ? 'The AI key is not configured (EXPO_PUBLIC_GEMINI_API_KEY).'
+          : 'Falta configurar la clave de la IA (EXPO_PUBLIC_GEMINI_API_KEY).',
+      };
+    }
     try {
       const cleanUri = decodeURIComponent(imageUri);
       let base64 = '';
