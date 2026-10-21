@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp, Analisis, RevisionTecnica } from '../../context/AppContext';
+import { Badge, Button, Card, Chip, EmptyState, Field, IconButton, IconTile, ScreenHeader, Sheet } from '../../components/ui';
 
 const OPCIONES_DIAGNOSTICO_TECNICO: RevisionTecnica['diagnosticoValidado'][] = [
   'PMP Confirmado',
@@ -141,6 +142,26 @@ export default function Historial() {
       language === 'en' ? 'Verdict Issued' : 'Dictamen Emitido',
       language === 'en' ? 'Technical report submitted to farmer.' : 'El informe técnico ha sido firmado y notificado al agricultor exitosamente.'
     );
+  };
+
+  const filtros =
+    rolActivo === 'tecnico'
+      ? [
+          { id: 'todos', label: t('filtroTodos'), count: analisisHistorial.length },
+          { id: 'pendientes', label: t('filtroPendientes'), icon: 'hourglass-outline' as const },
+          { id: 'revisados', label: t('estadoRevisado'), icon: 'checkmark-done-outline' as const },
+        ]
+      : [
+          { id: 'todos', label: t('filtroTodos'), count: analisisHistorial.length },
+          { id: 'alerta', label: t('filtroAlerta'), icon: 'warning-outline' as const },
+          { id: 'revisado', label: t('estadoRevisado'), icon: 'checkmark-done-outline' as const },
+          { id: 'pendiente', label: t('filtroPendientes'), icon: 'hourglass-outline' as const },
+        ];
+
+  const estadoRevisionBadge = (item: Analisis) => {
+    if (item.estadoRevision === 'revisado') return <Badge label={t('estadoRevisado')} tone="success" icon="checkmark" />;
+    if (item.estadoRevision === 'pendiente') return <Badge label={t('estadoPendiente')} tone="warning" icon="time-outline" />;
+    return null;
   };
 
   return (
@@ -307,184 +328,167 @@ export default function Historial() {
         )}
       </ScrollView>
 
-      {/* MODAL DETALLES DEL ANÁLISIS */}
+      {/* Detalle del análisis */}
       {selectedAnalisis && (
-        <Modal visible={Boolean(selectedAnalisis)} animationType="slide" transparent>
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' }}>
-            <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '92%' }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: theme.cardBorderSubtle }}>
-                <View>
-                  <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
-                    {language === 'en' ? 'Phytosanitary Report' : 'Reporte Fitosanitario'}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: theme.textMuted }}>{selectedAnalisis.fecha || ''}</Text>
-                </View>
-                <TouchableOpacity onPress={() => setSelectedAnalisis(null)}>
-                  <Ionicons name="close" size={22} color={theme.textMuted} />
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 14 }}>
-                <View style={{ width: '100%', height: 200, borderRadius: 16, overflow: 'hidden', marginBottom: 14, backgroundColor: theme.cardBorder }}>
-                  <Image source={{ uri: selectedAnalisis.imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                </View>
-
-                {/* Dictamen oficial */}
-                {selectedAnalisis.estadoRevision === 'revisado' && selectedAnalisis.revisionTecnica ? (
-                  <View style={{ backgroundColor: theme.primaryLight, borderWidth: 1, borderColor: theme.primaryLightBorder, borderRadius: 16, padding: 14, marginBottom: 14 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: theme.primary, textTransform: 'uppercase', marginBottom: 4 }}>
-                      {language === 'en' ? 'Official Agronomist Verdict' : 'Dictamen Técnico Oficial'}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: theme.text, fontWeight: '600' }}>
-                      {selectedAnalisis.revisionTecnica.tecnicoNombre} · {selectedAnalisis.revisionTecnica.registroProfesional}
-                    </Text>
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: theme.primary, marginTop: 4 }}>
-                      {selectedAnalisis.revisionTecnica.diagnosticoValidado}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 4 }}>
-                      {selectedAnalisis.revisionTecnica.observaciones}
-                    </Text>
-                  </View>
-                ) : null}
-
-                {/* Diagnóstico IA */}
-                <View style={{ backgroundColor: theme.inputBg, borderRadius: 16, padding: 14, marginBottom: 14, borderWidth: 1, borderColor: theme.cardBorderSubtle }}>
-                  <Text style={{ fontSize: 15, fontWeight: '800', color: theme.primary, marginBottom: 4 }}>
-                    {selectedAnalisis.diagnostico} ({selectedAnalisis.confianza}% IA)
-                  </Text>
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', marginTop: 8, marginBottom: 4 }}>
-                    {t('sintomasDetectados')}
-                  </Text>
-                  {(selectedAnalisis.sintomas || []).map((s, idx) => (
-                    <Text key={idx} style={{ fontSize: 12, color: theme.text, marginTop: 2 }}>
-                      • {s}
-                    </Text>
-                  ))}
-
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', marginTop: 10, marginBottom: 4 }}>
-                    {t('recomendacionesAgro')}
-                  </Text>
-                  {(selectedAnalisis.recomendaciones || []).map((r, idx) => (
-                    <Text key={idx} style={{ fontSize: 12, color: theme.text, marginTop: 2 }}>
-                      {idx + 1}. {r}
-                    </Text>
-                  ))}
-                </View>
-
-                {/* Acciones */}
-                {rolActivo === 'agricultor' && selectedAnalisis.estadoRevision === 'sin_solicitar' && (
-                  <TouchableOpacity
-                    onPress={() => handleSolicitarRevision(selectedAnalisis)}
-                    style={{ backgroundColor: '#1E40AF', paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginBottom: 8 }}>
-                    <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>
-                      {t('solicitarRevisionBtn')}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                {rolActivo === 'tecnico' && (
-                  <TouchableOpacity
-                    onPress={() => abrirFormularioDictamen(selectedAnalisis)}
-                    style={{ backgroundColor: '#1E40AF', paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginBottom: 8 }}>
-                    <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>
-                      {selectedAnalisis.estadoRevision === 'revisado' ? (language === 'en' ? 'Edit Verdict' : 'Editar Dictamen') : (language === 'en' ? 'Emit Technical Verdict' : 'Emitir Dictamen Técnico')}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                  onPress={() => handleEliminar(selectedAnalisis.id)}
-                  style={{ paddingVertical: 10, alignItems: 'center' }}>
-                  <Text style={{ color: theme.danger, fontWeight: '700', fontSize: 12 }}>
-                    {language === 'en' ? 'Delete this record' : 'Eliminar este registro'}
-                  </Text>
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
+        <Sheet
+          visible={Boolean(selectedAnalisis) && !modalDictamenVisible}
+          onClose={() => setSelectedAnalisis(null)}
+          title={language === 'en' ? 'Phytosanitary report' : 'Reporte fitosanitario'}
+          subtitle={`${selectedAnalisis.cultivoNombre || ''}${selectedAnalisis.fecha ? ` · ${selectedAnalisis.fecha}` : ''}`}>
+          <View style={{ width: '100%', height: 200, borderRadius: 18, overflow: 'hidden', marginBottom: 16, backgroundColor: theme.surfaceAlt }}>
+            <Image source={{ uri: selectedAnalisis.imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
           </View>
-        </Modal>
+
+          {/* Diagnóstico */}
+          {(() => {
+            const esAlerta = selectedAnalisis.estado === 'alerta' || Boolean(selectedAnalisis.diagnostico?.includes('PMP'));
+            return (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <IconTile icon={esAlerta ? 'alert-circle' : 'checkmark-circle'} tone={esAlerta ? 'warning' : 'success'} size={44} />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: theme.text }}>{selectedAnalisis.diagnostico}</Text>
+                  <Text style={{ fontSize: 13, color: theme.textMuted, marginTop: 1 }}>
+                    {selectedAnalisis.confianza}% {language === 'en' ? 'match' : 'de coincidencia'}
+                  </Text>
+                </View>
+                {estadoRevisionBadge(selectedAnalisis)}
+              </View>
+            );
+          })()}
+
+          {/* Dictamen oficial */}
+          {selectedAnalisis.estadoRevision === 'revisado' && selectedAnalisis.revisionTecnica ? (
+            <View style={{ backgroundColor: theme.primaryLight, borderWidth: 1, borderColor: theme.primaryLightBorder, borderRadius: 16, padding: 14, marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                <Ionicons name="ribbon" size={16} color={theme.primary} />
+                <Text style={{ fontSize: 14, fontWeight: '700', color: theme.primary, marginLeft: 6 }}>
+                  {language === 'en' ? 'Official agronomist verdict' : 'Dictamen técnico oficial'}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: theme.text }}>{selectedAnalisis.revisionTecnica.diagnosticoValidado}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginTop: 6, lineHeight: 20 }}>{selectedAnalisis.revisionTecnica.observaciones}</Text>
+              {selectedAnalisis.revisionTecnica.tratamientoRecomendado ? (
+                <Text style={{ fontSize: 14, color: theme.textSecondary, marginTop: 6, lineHeight: 20 }}>
+                  <Text style={{ fontWeight: '700', color: theme.text }}>{language === 'en' ? 'Treatment: ' : 'Tratamiento: '}</Text>
+                  {selectedAnalisis.revisionTecnica.tratamientoRecomendado}
+                </Text>
+              ) : null}
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 10 }}>
+                {selectedAnalisis.revisionTecnica.tecnicoNombre} · {selectedAnalisis.revisionTecnica.registroProfesional}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* Síntomas */}
+          <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text, marginBottom: 8 }}>{t('sintomasDetectados')}</Text>
+          <View style={{ marginBottom: 16 }}>
+            {(selectedAnalisis.sintomas || []).map((s, idx) => (
+              <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: theme.warning, marginTop: 7, marginRight: 10 }} />
+                <Text style={{ fontSize: 14, color: theme.textSecondary, flex: 1, lineHeight: 20 }}>{s}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Recomendaciones */}
+          <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text, marginBottom: 8 }}>{t('recomendacionesAgro')}</Text>
+          <View style={{ marginBottom: 20 }}>
+            {(selectedAnalisis.recomendaciones || []).map((r, idx) => (
+              <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
+                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: theme.primaryLight, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: theme.primary }}>{idx + 1}</Text>
+                </View>
+                <Text style={{ fontSize: 14, color: theme.textSecondary, flex: 1, lineHeight: 20 }}>{r}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Acciones */}
+          <View style={{ gap: 10 }}>
+            {rolActivo === 'agricultor' && selectedAnalisis.estadoRevision === 'sin_solicitar' && (
+              <Button label={t('solicitarRevisionBtn')} icon="paper-plane-outline" onPress={() => handleSolicitarRevision(selectedAnalisis)} />
+            )}
+            {rolActivo === 'tecnico' && (
+              <Button
+                label={
+                  selectedAnalisis.estadoRevision === 'revisado'
+                    ? language === 'en' ? 'Edit verdict' : 'Editar dictamen'
+                    : language === 'en' ? 'Issue technical verdict' : 'Emitir dictamen técnico'
+                }
+                icon="create-outline"
+                onPress={() => abrirFormularioDictamen(selectedAnalisis)}
+              />
+            )}
+            <Button
+              label={language === 'en' ? 'Delete this record' : 'Eliminar este registro'}
+              variant="ghost"
+              icon="trash-outline"
+              onPress={() => handleEliminar(selectedAnalisis.id)}
+              style={{ marginBottom: 4 }}
+            />
+          </View>
+        </Sheet>
       )}
 
-      {/* MODAL EMITIR DICTAMEN TÉCNICO */}
-      <Modal visible={modalDictamenVisible} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '90%' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
-                {language === 'en' ? 'Technical Agronomic Verdict' : 'Dictamen Técnico Agronómico'}
-              </Text>
-              <TouchableOpacity onPress={() => setModalDictamenVisible(false)}>
-                <Ionicons name="close" size={22} color={theme.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 14 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                {language === 'en' ? 'DIAGNOSIS' : 'DIAGNÓSTICO OFICIAL'}
-              </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row', marginBottom: 12 }}>
-                {OPCIONES_DIAGNOSTICO_TECNICO.map((opc) => (
-                  <TouchableOpacity
-                    key={opc}
-                    onPress={() => setDiagValidado(opc)}
-                    style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 7,
-                      borderRadius: 10,
-                      backgroundColor: diagValidado === opc ? theme.primary : theme.inputBg,
-                      borderWidth: 1,
-                      borderColor: diagValidado === opc ? theme.primary : theme.cardBorderSubtle,
-                      marginRight: 6,
-                    }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: diagValidado === opc ? 'white' : theme.textSecondary }}>
-                      {opc}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                {language === 'en' ? 'FIELD OBSERVATIONS *' : 'OBSERVACIONES TÉCNICAS *'}
-              </Text>
-              <TextInput
-                value={observacionesTecnicas}
-                onChangeText={setObservacionesTecnicas}
-                placeholder={language === 'en' ? 'Enter clinical agronomic observations...' : 'Ingresa tus observaciones de campo...'}
-                placeholderTextColor={theme.textMuted}
-                multiline
-                numberOfLines={3}
-                style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, padding: 12, fontSize: 13, color: theme.text, marginBottom: 12, minHeight: 70 }}
-              />
-
-              <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                {language === 'en' ? 'PRESCRIBED TREATMENT' : 'TRATAMIENTO SUGERIDO'}
-              </Text>
-              <TextInput
-                value={tratamientoSugerido}
-                onChangeText={setTratamientoSugerido}
-                placeholder={language === 'en' ? 'Sanitary recommendations...' : 'Medidas de control...'}
-                placeholderTextColor={theme.textMuted}
-                multiline
-                numberOfLines={3}
-                style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, padding: 12, fontSize: 13, color: theme.text, marginBottom: 14, minHeight: 70 }}
-              />
-            </ScrollView>
-
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+      {/* Emitir dictamen técnico */}
+      <Sheet
+        visible={modalDictamenVisible}
+        onClose={() => setModalDictamenVisible(false)}
+        title={language === 'en' ? 'Technical verdict' : 'Dictamen técnico'}
+        subtitle={selectedAnalisis?.cultivoNombre}
+        icon="ribbon-outline"
+        footer={
+          <>
+            <Button label={t('cancelar')} variant="secondary" onPress={() => setModalDictamenVisible(false)} flex />
+            <Button label={t('guardar')} onPress={handleGuardarDictamen} flex />
+          </>
+        }>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: theme.textSecondary, marginBottom: 8 }}>
+          {language === 'en' ? 'Diagnosis' : 'Diagnóstico oficial'}
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+          {OPCIONES_DIAGNOSTICO_TECNICO.map((opc) => {
+            const sel = diagValidado === opc;
+            return (
               <TouchableOpacity
-                onPress={() => setModalDictamenVisible(false)}
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.cardBorder, alignItems: 'center' }}>
-                <Text style={{ color: theme.textSecondary, fontWeight: '700', fontSize: 13 }}>{t('cancelar')}</Text>
+                key={opc}
+                onPress={() => setDiagValidado(opc)}
+                activeOpacity={0.8}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 12,
+                  backgroundColor: sel ? theme.primaryLight : theme.inputBg,
+                  borderWidth: 1,
+                  borderColor: sel ? theme.primary : theme.inputBorder,
+                }}>
+                <Ionicons name={sel ? 'radio-button-on' : 'radio-button-off'} size={15} color={sel ? theme.primary : theme.textMuted} style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 13, fontWeight: '600', color: sel ? theme.primary : theme.textSecondary }}>{opc}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleGuardarDictamen}
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: theme.primary, alignItems: 'center' }}>
-                <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>{t('guardar')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            );
+          })}
         </View>
-      </Modal>
+
+        <Field
+          label={language === 'en' ? 'Field observations' : 'Observaciones técnicas'}
+          required
+          value={observacionesTecnicas}
+          onChangeText={setObservacionesTecnicas}
+          placeholder={language === 'en' ? 'Enter clinical agronomic observations...' : 'Ingresa tus observaciones de campo...'}
+          multiline
+          numberOfLines={3}
+        />
+        <Field
+          label={language === 'en' ? 'Prescribed treatment' : 'Tratamiento sugerido'}
+          value={tratamientoSugerido}
+          onChangeText={setTratamientoSugerido}
+          placeholder={language === 'en' ? 'Sanitary recommendations...' : 'Medidas de control...'}
+          multiline
+          numberOfLines={3}
+        />
+      </Sheet>
     </SafeAreaView>
   );
 }
