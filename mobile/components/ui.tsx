@@ -136,3 +136,86 @@ export function Card({
   return <View style={[base, style]}>{children}</View>;
 }
 
+// ---------------------------------------------------------------------------
+// Botón
+// ---------------------------------------------------------------------------
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dangerSoft' | 'soft';
+
+export function Button({
+  label,
+  onPress,
+  variant = 'primary',
+  icon,
+  iconRight,
+  loading,
+  disabled,
+  size = 'md',
+  style,
+  flex,
+}: {
+  label: string;
+  onPress?: () => void;
+  variant?: ButtonVariant;
+  icon?: IconName;
+  iconRight?: IconName;
+  loading?: boolean;
+  disabled?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  style?: StyleProp<ViewStyle>;
+  flex?: boolean;
+}) {
+  const { theme } = useApp();
+
+  const palette: Record<ButtonVariant, { bg: string; fg: string; border: string }> = {
+    primary: { bg: theme.primary, fg: theme.onPrimary, border: theme.primary },
+    secondary: { bg: theme.card, fg: theme.text, border: theme.cardBorder },
+    soft: { bg: theme.primaryLight, fg: theme.primary, border: 'transparent' },
+    ghost: { bg: 'transparent', fg: theme.textSecondary, border: 'transparent' },
+    danger: { bg: theme.danger, fg: '#FFFFFF', border: theme.danger },
+    dangerSoft: { bg: theme.dangerBg, fg: theme.danger, border: 'transparent' },
+  };
+  const p = palette[variant];
+  const dims = {
+    sm: { py: 8, px: 12, font: 13, icon: 14, r: radius.sm },
+    md: { py: 13, px: 18, font: 15, icon: 17, r: radius.md },
+    lg: { py: 16, px: 20, font: 16, icon: 18, r: radius.md },
+  }[size];
+  const isDisabled = disabled || loading;
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={isDisabled}
+      activeOpacity={0.82}
+      accessibilityRole="button"
+      style={[
+        {
+          backgroundColor: p.bg,
+          borderColor: p.border,
+          borderWidth: 1,
+          borderRadius: dims.r,
+          paddingVertical: dims.py,
+          paddingHorizontal: dims.px,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: isDisabled ? 0.45 : 1,
+        },
+        flex ? { flex: 1 } : null,
+        style,
+      ]}>
+      {loading ? (
+        <ActivityIndicator color={p.fg} size="small" />
+      ) : (
+        <>
+          {icon ? <Ionicons name={icon} size={dims.icon} color={p.fg} style={{ marginRight: 8 }} /> : null}
+          <Text style={{ color: p.fg, fontSize: dims.font, fontWeight: '700' }} numberOfLines={1}>
+            {label}
+          </Text>
+          {iconRight ? <Ionicons name={iconRight} size={dims.icon} color={p.fg} style={{ marginLeft: 8 }} /> : null}
+        </>
+      )}
+    </TouchableOpacity>
+  );
+}
+
