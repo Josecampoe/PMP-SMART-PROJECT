@@ -168,8 +168,8 @@ export const translations = {
     cancelar: 'Cancel',
 
     // History Screen
-    historialTitulo: 'Phytosanitary History',
-    historialSubtitulo: 'Chronological record of AI diagnoses',
+    historialTitulo: 'History',
+    historialSubtitulo: 'Your diagnoses, newest first',
     filtroTodos: 'All',
     filtroAlerta: 'Alerts',
     filtroSano: 'Healthy',
