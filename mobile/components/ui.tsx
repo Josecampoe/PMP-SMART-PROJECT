@@ -560,3 +560,73 @@ export function EmptyState({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Hoja inferior (modal)
+// ---------------------------------------------------------------------------
+export function Sheet({
+  visible,
+  onClose,
+  title,
+  subtitle,
+  icon,
+  children,
+  footer,
+  scroll = true,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: string;
+  icon?: IconName;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  scroll?: boolean;
+}) {
+  const { theme } = useApp();
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose} statusBarTranslucent>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.overlay }}>
+          <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Cerrar" />
+          <View
+            style={{
+              backgroundColor: theme.card,
+              borderTopLeftRadius: radius.xl,
+              borderTopRightRadius: radius.xl,
+              maxHeight: '92%',
+              paddingBottom: Math.max(insets.bottom, 16),
+            }}>
+            <View style={{ alignItems: 'center', paddingTop: 10 }}>
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: theme.cardBorder }} />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 14, paddingBottom: 14 }}>
+              {icon ? (
+                <View style={{ marginRight: 12 }}>
+                  <IconTile icon={icon} size={40} />
+                </View>
+              ) : null}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 19, fontWeight: '800', color: theme.text, letterSpacing: -0.3 }}>{title}</Text>
+                {subtitle ? <Text style={{ fontSize: 13, color: theme.textMuted, marginTop: 2 }}>{subtitle}</Text> : null}
+              </View>
+              <IconButton icon="close" onPress={onClose} size={34} accessibilityLabel="Cerrar" />
+            </View>
+            {scroll ? (
+              <ScrollView
+                style={{ flexGrow: 0 }}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}>
+                {children}
+              </ScrollView>
+            ) : (
+              <View style={{ paddingHorizontal: 20 }}>{children}</View>
+            )}
+            {footer ? <View style={{ paddingHorizontal: 20, paddingTop: 12, flexDirection: 'row', gap: 10 }}>{footer}</View> : null}
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
