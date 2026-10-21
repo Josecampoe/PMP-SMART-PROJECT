@@ -1,21 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Modal,
-  ScrollView,
-  TextInput,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera';
-import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useApp } from '../context/AppContext';
@@ -212,8 +202,12 @@ export default function CameraScreen() {
     );
   }
 
+  const glass = { backgroundColor: 'rgba(0,0,0,0.45)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' };
+  const corner = { position: 'absolute' as const, width: 28, height: 28, borderColor: RETICLE };
+
   return (
-    <View className="flex-1 bg-black">
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <StatusBar style="light" />
       {isFocused && (
         <CameraView
           ref={cameraRef}
@@ -225,101 +219,105 @@ export default function CameraScreen() {
       )}
 
       {isCapturing && (
-        <View className="absolute z-50 w-full h-full bg-black/60 items-center justify-center">
-          <ActivityIndicator size="large" color="#43A047" />
-          <Text className="text-white mt-4 font-bold text-base">Procesando imagen...</Text>
+        <View style={[StyleSheet.absoluteFill, { zIndex: 50, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }]}>
+          <ActivityIndicator size="large" color={RETICLE} />
+          <Text style={{ color: '#FFFFFF', marginTop: 14, fontWeight: '700', fontSize: 15 }}>
+            {language === 'en' ? 'Processing image...' : 'Procesando imagen...'}
+          </Text>
         </View>
       )}
 
-      <SafeAreaView className="absolute w-full h-full justify-between" pointerEvents="box-none">
-          {/* Barra superior */}
-          <View className="bg-black/40 px-4 py-3 flex-row justify-between items-center backdrop-blur-md">
+      <SafeAreaView style={[StyleSheet.absoluteFill, { justifyContent: 'space-between' }]} pointerEvents="box-none">
+        {/* Barra superior */}
+        <View style={{ paddingHorizontal: 16, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            accessibilityLabel={language === 'en' ? 'Back' : 'Volver'}
+            style={[glass, { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' }]}>
+            <Ionicons name="close" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>{t('camaraTitulo')}</Text>
+
+          <TouchableOpacity
+            onPress={toggleFlash}
+            accessibilityLabel="Flash"
+            style={[
+              glass,
+              { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
+              flash !== 'off' ? { backgroundColor: '#F0B64A', borderColor: '#F0B64A' } : null,
+            ]}>
+            <Ionicons name={flashIcon} size={19} color={flash !== 'off' ? '#1F1400' : '#FFFFFF'} />
+            {flash === 'auto' && (
+              <Text style={{ position: 'absolute', bottom: 4, right: 7, fontSize: 8, fontWeight: '900', color: '#1F1400' }}>A</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Retícula */}
+        <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1, paddingHorizontal: 32 }} pointerEvents="none">
+          <View style={{ width: 260, height: 260 }}>
+            <View style={[corner, { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 18 }]} />
+            <View style={[corner, { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 18 }]} />
+            <View style={[corner, { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 18 }]} />
+            <View style={[corner, { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 18 }]} />
+          </View>
+          <View style={[glass, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, marginTop: 20 }]}>
+            <Ionicons name="sunny-outline" size={14} color="#FFFFFF" />
+            <Text style={{ color: '#FFFFFF', fontSize: 13, marginLeft: 6 }}>
+              {language === 'en' ? 'Focus on top leaves in good light' : 'Enfoca hojas superiores con buena luz'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Controles inferiores */}
+        <View style={{ paddingBottom: 20, paddingHorizontal: 24, alignItems: 'center' }}>
+          <TouchableOpacity
+            onPress={() => setSelectorVisible(true)}
+            activeOpacity={0.8}
+            style={[glass, { flexDirection: 'row', alignItems: 'center', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9, marginBottom: 22, maxWidth: '100%' }]}>
+            <Ionicons name="leaf" size={14} color={RETICLE} />
+            <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '600', marginLeft: 7, flexShrink: 1 }} numberOfLines={1}>
+              {currentCultivo.nombre}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.7)" style={{ marginLeft: 6 }} />
+          </TouchableOpacity>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: 300 }}>
             <TouchableOpacity
-              onPress={() => router.back()}
-              className="flex-row items-center bg-black/30 px-3 py-1.5 rounded-full">
-              <FontAwesome name="arrow-left" size={14} color="white" />
-              <Text className="text-white text-xs ml-2 font-medium">Volver</Text>
+              onPress={pickImageFromGallery}
+              accessibilityLabel={language === 'en' ? 'Open gallery' : 'Abrir galería'}
+              style={[glass, { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' }]}>
+              <Ionicons name="images-outline" size={22} color="#FFFFFF" />
             </TouchableOpacity>
 
-            <Text className="text-white text-base font-bold tracking-wider">ANALIZAR PLANTA</Text>
-
             <TouchableOpacity
-              onPress={toggleFlash}
-              className={`w-9 h-9 rounded-full items-center justify-center ${
-                flash !== 'off' ? 'bg-[#F9A825]' : 'bg-black/40 border border-white/20'
-              }`}>
-              <FontAwesome
-                name="bolt"
-                size={16}
-                color={flash !== 'off' ? '#000' : 'white'}
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Área central con retícula */}
-          <View className="items-center justify-center flex-1 px-8">
-            <View className="bg-black/60 px-4 py-2 rounded-full mb-6 border border-white/10">
-              <Text className="text-white text-xs text-center">
-                💡 Enfoca hojas apicales y brotes con buena iluminación
-              </Text>
-            </View>
-
-            <View className="w-64 h-64 border-2 border-dashed border-[#43A047]/70 rounded-2xl relative items-center justify-center">
-              <View className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-[#43A047] rounded-tl-lg" />
-              <View className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-[#43A047] rounded-tr-lg" />
-              <View className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-[#43A047] rounded-bl-lg" />
-              <View className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-[#43A047] rounded-br-lg" />
-
-              {flash !== 'off' && (
-                <View className="absolute top-3 right-3 bg-black/60 px-2 py-0.5 rounded-md">
-                  <Text className="text-xs text-[#F9A825] font-bold">
-                    Flash: {flash.toUpperCase()}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Controles inferiores */}
-          <View className="bg-black/75 pt-4 pb-8 px-6 rounded-t-3xl border-t border-white/10 items-center">
-            {/* Selector de cultivo */}
-            <TouchableOpacity
-              onPress={() => setSelectorVisible(true)}
-              className="bg-white/15 active:bg-white/25 rounded-full px-4 py-2 mb-6 flex-row items-center border border-white/20">
-              <FontAwesome name="map-marker" size={13} color="#81C784" />
-              <Text className="text-white text-xs font-semibold ml-2">
-                {currentCultivo.nombre} ({currentCultivo.variedad})
-              </Text>
-              <FontAwesome name="chevron-down" size={11} color="#D1D5DB" className="ml-2.5" />
+              onPress={takePicture}
+              disabled={isCapturing || !isCameraReady}
+              activeOpacity={0.85}
+              accessibilityLabel={t('tomarFoto')}
+              style={{
+                width: 82,
+                height: 82,
+                borderRadius: 41,
+                borderWidth: 4,
+                borderColor: '#FFFFFF',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: isCapturing || !isCameraReady ? 0.5 : 1,
+              }}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#FFFFFF' }} />
             </TouchableOpacity>
 
-            {/* Fila de disparadores */}
-            <View className="flex-row items-center justify-around w-full max-w-xs">
-              <TouchableOpacity
-                onPress={pickImageFromGallery}
-                className="w-12 h-12 rounded-full bg-white/15 items-center justify-center border border-white/20 active:scale-90"
-                accessibilityLabel="Abrir galería">
-                <FontAwesome name="image" size={18} color="white" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={takePicture}
-                disabled={isCapturing || !isCameraReady}
-                className={`w-20 h-20 rounded-full border-4 border-white items-center justify-center shadow-lg active:scale-95 ${
-                  isCapturing || !isCameraReady ? 'bg-white/10 opacity-50' : 'bg-white/20'
-                }`}>
-                <View className="w-16 h-16 rounded-full bg-white shadow-md" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={toggleFacing}
-                className="w-12 h-12 rounded-full bg-white/15 items-center justify-center border border-white/20 active:scale-90"
-                accessibilityLabel="Cambiar cámara">
-                <FontAwesome name="refresh" size={18} color="white" />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={toggleFacing}
+              accessibilityLabel={t('cambiarCamara')}
+              style={[glass, { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' }]}>
+              <Ionicons name="camera-reverse-outline" size={23} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </View>
+      </SafeAreaView>
 
       {/* Seleccionar parcela */}
       <Sheet
