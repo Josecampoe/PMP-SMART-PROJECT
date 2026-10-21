@@ -113,7 +113,7 @@ export const translations = {
     cerrarSesion: 'Cerrar sesión',
 
     // Camera Screen
-    camaraTitulo: 'Escáner Fitosanitario',
+    camaraTitulo: 'Analizar planta',
     camaraInstruccion: 'Alinea la hoja sospechosa en el centro y con buena iluminación',
     tomarFoto: 'Capturar',
     galeria: 'Galería',
