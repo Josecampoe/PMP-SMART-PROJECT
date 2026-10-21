@@ -72,7 +72,15 @@ router.post('/procesar', async (req: AuthenticatedRequest, res: Response) => {
     
     const parsedData = JSON.parse(jsonMatch[0]);
 
-    res.json({ success: true, data: parsedData });
+    // Normalizar campos para que la app siempre reciba el formato esperado
+    const data = {
+      ...parsedData,
+      confianza: Math.max(0, Math.min(100, Number(parsedData.confianza) || 0)),
+      sintomas: Array.isArray(parsedData.sintomas) ? parsedData.sintomas : [],
+      recomendaciones: Array.isArray(parsedData.recomendaciones) ? parsedData.recomendaciones : [],
+    };
+
+    res.json({ success: true, data });
   } catch (err: any) {
     console.error('Error procesando imagen con IA:', err.message);
     res.status(500).json({ success: false, error: 'Error procesando la imagen con IA.' });
