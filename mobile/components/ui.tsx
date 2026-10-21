@@ -261,3 +261,24 @@ export function IconButton({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Icono dentro de un cuadro con tinte
+// ---------------------------------------------------------------------------
+export function IconTile({ icon, tone = 'primary', size = 40 }: { icon: IconName; tone?: Tone; size?: number }) {
+  const { theme } = useApp();
+  const c = toneColors(theme, tone);
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size * 0.3,
+        backgroundColor: c.bg,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+      <Ionicons name={icon} size={size * 0.48} color={c.fg} />
+    </View>
+  );
+}
+
