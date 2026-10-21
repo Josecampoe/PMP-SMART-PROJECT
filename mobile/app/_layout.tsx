@@ -2,6 +2,8 @@ import '../global.css';
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { FontAwesome } from '@expo/vector-icons';
 import { AppProvider } from '../context/AppContext';
 import { getAccessToken, authApi, authEvents } from '../lib/api';
 
@@ -60,14 +62,18 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       <View
         style={{
           flex: 1,
-          backgroundColor: '#0F1A12',
+          backgroundColor: '#0A1410',
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-        <ActivityIndicator size="large" color="#66BB6A" />
-        <Text style={{ color: 'rgba(200, 230, 201, 0.5)', marginTop: 16, fontSize: 13, fontWeight: '500' }}>
-          Cargando...
-        </Text>
+        <StatusBar style="light" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+          <FontAwesome name="leaf" size={20} color="#A5CF5F" />
+          <Text style={{ color: '#F3F1E7', fontSize: 20, fontWeight: '800', marginLeft: 8 }}>
+            PMP <Text style={{ color: '#A5CF5F' }}>Smart</Text>
+          </Text>
+        </View>
+        <ActivityIndicator size="small" color="#A5CF5F" />
       </View>
     );
   }
