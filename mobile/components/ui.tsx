@@ -102,3 +102,37 @@ export function ScreenHeader({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Tarjeta
+// ---------------------------------------------------------------------------
+export function Card({
+  children,
+  style,
+  onPress,
+  padding = 16,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
+  padding?: number;
+}) {
+  const { theme } = useApp();
+  const elevation = useElevation(1);
+  const base: ViewStyle = {
+    backgroundColor: theme.card,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: theme.cardBorder,
+    padding,
+    ...elevation,
+  };
+  if (onPress) {
+    return (
+      <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={[base, style]}>
+        {children}
+      </TouchableOpacity>
+    );
+  }
+  return <View style={[base, style]}>{children}</View>;
+}
+
