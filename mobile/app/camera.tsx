@@ -12,19 +12,20 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useApp } from '../context/AppContext';
+import { Button, Field, IconButton, IconTile, Sheet } from '../components/ui';
 
 export default function CameraScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ cultivoId?: string }>();
   const cameraRef = useRef<CameraView>(null);
 
-  const { cultivos, selectedCultivoId, setSelectedCultivoId, addCultivo, setCurrentImageB64 } = useApp();
+  const { cultivos, selectedCultivoId, setSelectedCultivoId, addCultivo, setCurrentImageB64, theme, language, t } = useApp();
 
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<CameraType>('back');
@@ -321,106 +322,84 @@ export default function CameraScreen() {
           </View>
         </SafeAreaView>
 
-      {/* MODAL: SELECCIONAR O CREAR PARCELA */}
-      <Modal visible={selectorVisible} transparent animationType="fade">
-        <View className="flex-1 bg-black/70 justify-center px-6">
-          <View className="bg-white rounded-2xl p-5 max-h-[75%]">
-            <View className="flex-row justify-between items-center mb-3 pb-2 border-b border-gray-100">
-              <Text className="text-base font-bold text-[#263238]">Selecciona tu Parcela</Text>
-              <TouchableOpacity onPress={() => setSelectorVisible(false)}>
-                <FontAwesome name="times" size={16} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView className="max-h-60 mb-3">
-              {cultivos.length === 0 ? (
-                <View className="p-4 bg-gray-50 rounded-xl items-center mb-2">
-                  <Text className="text-xs text-gray-500 text-center">
-                    Aún no tienes parcelas registradas. Puedes escanear como "Muestra General" o registrar tu primer lote.
+      {/* Seleccionar parcela */}
+      <Sheet
+        visible={selectorVisible && !modalNuevoLote}
+        onClose={() => setSelectorVisible(false)}
+        title={language === 'en' ? 'Select plot' : 'Selecciona tu parcela'}
+        subtitle={language === 'en' ? 'The analysis will be saved to this plot' : 'El análisis se guardará en esta parcela'}
+        footer={<Button label={language === 'en' ? 'Register new plot' : 'Registrar nueva parcela'} icon="add" variant="secondary" onPress={() => setModalNuevoLote(true)} flex />}>
+        {cultivos.length === 0 ? (
+          <View style={{ padding: 16, backgroundColor: theme.surfaceAlt, borderRadius: 14 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, textAlign: 'center', lineHeight: 20 }}>
+              {language === 'en'
+                ? 'You have no plots yet. You can scan as a "General Sample" or register your first plot.'
+                : 'Aún no tienes parcelas registradas. Puedes escanear como "Muestra General" o registrar tu primer lote.'}
+            </Text>
+          </View>
+        ) : (
+          cultivos.map((cultivo) => {
+            const isSelected = cultivo.id === currentCultivo.id;
+            return (
+              <TouchableOpacity
+                key={cultivo.id}
+                onPress={() => {
+                  setSelectedCultivoId(cultivo.id);
+                  setSelectorVisible(false);
+                }}
+                activeOpacity={0.8}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 14,
+                  borderRadius: 14,
+                  marginBottom: 8,
+                  borderWidth: 1,
+                  borderColor: isSelected ? theme.primary : theme.cardBorder,
+                  backgroundColor: isSelected ? theme.primaryLight : theme.card,
+                }}>
+                <IconTile icon="leaf" size={36} tone={isSelected ? 'primary' : 'neutral'} />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text }}>{cultivo.nombre}</Text>
+                  <Text style={{ fontSize: 13, color: theme.textMuted, marginTop: 1 }}>
+                    {cultivo.variedad} · {cultivo.hectareas} ha
                   </Text>
                 </View>
-              ) : (
-                cultivos.map((cultivo) => {
-                  const isSelected = cultivo.id === currentCultivo.id;
-                  return (
-                    <TouchableOpacity
-                      key={cultivo.id}
-                      onPress={() => {
-                        setSelectedCultivoId(cultivo.id);
-                        setSelectorVisible(false);
-                      }}
-                      className={`p-3 rounded-xl mb-2 flex-row justify-between items-center border ${
-                        isSelected
-                          ? 'bg-emerald-50 border-[#2E7D32]'
-                          : 'bg-gray-50 border-gray-200'
-                      }`}>
-                      <View className="flex-1">
-                        <Text
-                          className={`text-sm font-bold ${
-                            isSelected ? 'text-[#2E7D32]' : 'text-gray-800'
-                          }`}>
-                          {cultivo.nombre}
-                        </Text>
-                        <Text className="text-xs text-gray-500">
-                          {cultivo.variedad} · {cultivo.hectareas} Ha
-                        </Text>
-                      </View>
-                      {isSelected && <FontAwesome name="check" size={14} color="#2E7D32" />}
-                    </TouchableOpacity>
-                  );
-                })
-              )}
-            </ScrollView>
-
-            <TouchableOpacity
-              onPress={() => setModalNuevoLote(true)}
-              className="py-2.5 bg-[#2E7D32] rounded-xl items-center flex-row justify-center active:scale-95">
-              <FontAwesome name="plus" size={12} color="white" />
-              <Text className="text-xs font-bold text-white ml-2">Registrar Nueva Parcela</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL PEQUEÑO: REGISTRAR LOTE RÁPIDO */}
-      <Modal visible={modalNuevoLote} transparent animationType="slide">
-        <View className="flex-1 bg-black/70 justify-center px-6">
-          <View className="bg-white rounded-2xl p-5">
-            <Text className="text-base font-bold text-[#263238] mb-3">
-              Registrar Parcela para este Análisis
-            </Text>
-
-            <Text className="text-xs font-bold text-gray-700 mb-1">Nombre del Lote *</Text>
-            <TextInput
-              value={nuevoLoteNombre}
-              onChangeText={setNuevoLoteNombre}
-              placeholder="Ej: Lote El Trapiche"
-              className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800 mb-3"
-            />
-
-            <Text className="text-xs font-bold text-gray-700 mb-1">Variedad de Papa *</Text>
-            <TextInput
-              value={nuevoLoteVariedad}
-              onChangeText={setNuevoLoteVariedad}
-              placeholder="Ej: Pastusa Suprema, Capiro"
-              className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800 mb-4"
-            />
-
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                onPress={() => setModalNuevoLote(false)}
-                className="flex-1 py-2.5 border border-gray-300 rounded-xl items-center">
-                <Text className="text-xs font-semibold text-gray-600">Cancelar</Text>
+                <Ionicons name={isSelected ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={isSelected ? theme.primary : theme.cardBorder} />
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleCrearLoteRapido}
-                className="flex-1 py-2.5 bg-[#2E7D32] rounded-xl items-center shadow-sm">
-                <Text className="text-xs font-bold text-white">Guardar y Vincular</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+            );
+          })
+        )}
+      </Sheet>
+
+      {/* Registrar lote rápido */}
+      <Sheet
+        visible={modalNuevoLote}
+        onClose={() => setModalNuevoLote(false)}
+        title={language === 'en' ? 'New plot' : 'Nueva parcela'}
+        subtitle={language === 'en' ? 'It will be linked to this analysis' : 'Se vinculará a este análisis'}
+        icon="leaf-outline"
+        footer={
+          <>
+            <Button label={t('cancelar')} variant="secondary" onPress={() => setModalNuevoLote(false)} flex />
+            <Button label={language === 'en' ? 'Save' : 'Guardar'} onPress={handleCrearLoteRapido} flex />
+          </>
+        }>
+        <Field
+          label={language === 'en' ? 'Plot name' : 'Nombre del lote'}
+          required
+          value={nuevoLoteNombre}
+          onChangeText={setNuevoLoteNombre}
+          placeholder="Ej: Lote El Trapiche"
+        />
+        <Field
+          label={language === 'en' ? 'Potato variety' : 'Variedad de papa'}
+          required
+          value={nuevoLoteVariedad}
+          onChangeText={setNuevoLoteVariedad}
+          placeholder="Ej: Pastusa Suprema, Capiro"
+        />
+      </Sheet>
     </View>
   );
 }
