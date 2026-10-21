@@ -198,3 +198,57 @@ function Firefly({ x, y, delay, range }: { x: number; y: number; delay: number; 
   );
 }
 
+export default function FieldBackground() {
+  const { width: W, height: H } = useWindowDimensions();
+
+  const scene = useMemo(() => {
+    const rand = seeded(7);
+    const stars = Array.from({ length: 22 }, (_, i) => ({
+      key: `s${i}`,
+      x: rand() * W,
+      y: rand() * H * 0.45,
+      size: rand() > 0.8 ? 2.5 : 1.5,
+      delay: Math.floor(rand() * 3000),
+    }));
+    const leafColors = ['#7CB342', '#9CCC65', '#558B2F', '#AED581', '#C5A253'];
+    const leaves = Array.from({ length: 11 }, (_, i) => ({
+      key: `l${i}`,
+      startX: rand() * W,
+      size: 10 + Math.round(rand() * 10),
+      color: leafColors[i % leafColors.length],
+      duration: 14000 + Math.floor(rand() * 10000),
+      delay: Math.floor(rand() * 12000),
+      drift: (rand() - 0.3) * W * 0.5,
+      spin: (rand() > 0.5 ? 1 : -1) * (120 + rand() * 240),
+    }));
+    const fireflies = Array.from({ length: 9 }, (_, i) => ({
+      key: `f${i}`,
+      x: rand() * W,
+      y: H * 0.55 + rand() * H * 0.35,
+      delay: Math.floor(rand() * 2500),
+      range: 12 + rand() * 22,
+    }));
+    return { stars, leaves, fireflies };
+  }, [W, H]);
+
+  return (
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#0A1410', overflow: 'hidden' }]}>
+      {/* Cielo: banda cálida del atardecer y auroras */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: H * 0.5, backgroundColor: '#0E1B1A' }} />
+      <Glow size={W * 1.1} color="#E0A040" opacity={0.1} top={H * 0.32} left={W * 0.25} drift={18} duration={7000} />
+      <Glow size={W * 0.45} color="#F2C06B" opacity={0.16} top={H * 0.47} left={W * 0.55} drift={6} duration={5000} />
+      <Glow size={W * 1.2} color="#2E7D32" opacity={0.14} top={-W * 0.5} left={-W * 0.4} drift={40} duration={9000} />
+      <Glow size={W * 0.9} color="#1B7A5A" opacity={0.12} top={H * 0.08} left={W * 0.45} drift={30} duration={11000} />
+
+      {scene.stars.map(({ key, ...s }) => <Star key={key} {...s} />)}
+
+      {/* Colinas en capas (parallax) */}
+      <Hill width={W * 2.2} height={H * 0.42} bottom={-H * 0.06} offsetX={-W * 0.9} color="#10261A" sway={10} duration={9000} />
+      <Hill width={W * 2} height={H * 0.34} bottom={-H * 0.08} offsetX={-W * 0.2} color="#14301F" sway={16} duration={7500} />
+      <Hill width={W * 2.4} height={H * 0.26} bottom={-H * 0.1} offsetX={-W * 0.7} color="#183A25" sway={24} duration={6000} />
+
+      {scene.fireflies.map(({ key, ...f }) => <Firefly key={key} {...f} />)}
+      {scene.leaves.map(({ key, ...l }) => <Leaf key={key} {...l} screenH={H} />)}
+    </View>
+  );
+}
