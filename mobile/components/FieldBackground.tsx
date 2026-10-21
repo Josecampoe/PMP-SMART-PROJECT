@@ -113,3 +113,51 @@ function Hill({
   );
 }
 
+// ---------- Hojas que flotan con el viento ----------
+function Leaf({
+  startX, size, color, duration, delay, screenH, drift, spin,
+}: {
+  startX: number; size: number; color: string; duration: number; delay: number;
+  screenH: number; drift: number; spin: number;
+}) {
+  const rise = useRef(new Animated.Value(0)).current;
+  const sway = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const r = Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(rise, { toValue: 1, duration, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(rise, { toValue: 0, duration: 0, useNativeDriver: true }),
+      ])
+    );
+    const s = loop(sway, duration / 4);
+    r.start();
+    s.start();
+    return () => {
+      r.stop();
+      s.stop();
+    };
+  }, []);
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        left: startX,
+        top: 0,
+        opacity: rise.interpolate({ inputRange: [0, 0.12, 0.8, 1], outputRange: [0, 0.55, 0.4, 0] }),
+        transform: [
+          { translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [screenH + 30, screenH * 0.1] }) },
+          { translateX: rise.interpolate({ inputRange: [0, 1], outputRange: [0, drift] }) },
+          { translateX: sway.interpolate({ inputRange: [0, 1], outputRange: [-14, 14] }) },
+          { rotate: rise.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${spin}deg`] }) },
+          { rotateY: sway.interpolate({ inputRange: [0, 1], outputRange: ['-40deg', '40deg'] }) },
+        ],
+      }}>
+      <FontAwesome name="leaf" size={size} color={color} />
+    </Animated.View>
+  );
+}
+
