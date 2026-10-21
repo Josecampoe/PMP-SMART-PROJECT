@@ -488,3 +488,43 @@ export function StatTile({ value, label, tone = 'neutral', icon }: { value: stri
   );
 }
 
+// ---------------------------------------------------------------------------
+// Fila de ajustes (icono + título + descripción + control a la derecha)
+// ---------------------------------------------------------------------------
+export function SettingsRow({
+  icon,
+  tone = 'primary',
+  title,
+  desc,
+  right,
+  onPress,
+  danger,
+}: {
+  icon: IconName;
+  tone?: Tone;
+  title: string;
+  desc?: string;
+  right?: React.ReactNode;
+  onPress?: () => void;
+  danger?: boolean;
+}) {
+  const { theme } = useApp();
+  const content = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13 }}>
+      <IconTile icon={icon} tone={tone} size={36} />
+      <View style={{ flex: 1, marginLeft: 12, marginRight: 10 }}>
+        <Text style={{ fontSize: 15, fontWeight: '600', color: danger ? theme.danger : theme.text }}>{title}</Text>
+        {desc ? <Text style={{ fontSize: 13, color: theme.textMuted, marginTop: 1 }}>{desc}</Text> : null}
+      </View>
+      {right ?? (onPress ? <Ionicons name="chevron-forward" size={18} color={theme.textMuted} /> : null)}
+    </View>
+  );
+  return onPress ? (
+    <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
+      {content}
+    </TouchableOpacity>
+  ) : (
+    content
+  );
+}
+
