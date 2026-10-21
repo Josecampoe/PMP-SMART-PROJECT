@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, Alert, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,6 +23,7 @@ export default function Historial() {
     solicitarRevisionTecnica,
     guardarRevisionTecnica,
     perfilTecnico,
+    refreshData,
     theme,
     language,
     t,
@@ -30,6 +31,15 @@ export default function Historial() {
 
   const [filtro, setFiltro] = useState<string>('todos');
   const [busqueda, setBusqueda] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
   const [selectedAnalisis, setSelectedAnalisis] = useState<Analisis | null>(null);
 
   // Estados para el formulario de dictamen técnico
@@ -170,7 +180,8 @@ export default function Historial() {
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />}>
         {/* Buscador */}
         <Field
           icon="search"
