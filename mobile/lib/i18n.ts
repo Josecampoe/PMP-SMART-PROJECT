@@ -188,13 +188,13 @@ export const translations = {
     estadoPendiente: 'Pending',
 
     // Result Screen
-    resultadoTitulo: 'AI Diagnosis',
+    resultadoTitulo: 'Diagnosis',
     resultadoSubtitulo: 'Real-time phytosanitary assessment',
     analizando: 'Analyzing potato leaf with AI...',
     analizandoDesc: 'Detecting Potato Purple Top / Zebra Chip patterns...',
     sintomasDetectados: 'Detected Symptoms',
     recomendacionesAgro: 'Agronomic Recommendations',
-    guardarAnalisis: 'Save to History',
+    guardarAnalisis: 'Save only',
     guardarYSolicitar: 'Save & Request Review',
     analisisGuardado: 'Analysis saved successfully!',
     repetirFoto: 'Take another photo',
