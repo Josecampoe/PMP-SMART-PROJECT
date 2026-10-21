@@ -282,3 +282,27 @@ export function IconTile({ icon, tone = 'primary', size = 40 }: { icon: IconName
   );
 }
 
+// ---------------------------------------------------------------------------
+// Etiqueta de estado
+// ---------------------------------------------------------------------------
+export function Badge({ label, tone = 'neutral', icon, dot }: { label: string; tone?: Tone; icon?: IconName; dot?: boolean }) {
+  const { theme } = useApp();
+  const c = toneColors(theme, tone);
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        backgroundColor: c.bg,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 999,
+      }}>
+      {dot ? <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.fg, marginRight: 5 }} /> : null}
+      {icon ? <Ionicons name={icon} size={11} color={c.fg} style={{ marginRight: 4 }} /> : null}
+      <Text style={{ fontSize: 11, fontWeight: '700', color: c.fg }}>{label}</Text>
+    </View>
+  );
+}
+
