@@ -70,14 +70,14 @@ export const translations = {
     estadoPendiente: 'Pendiente',
 
     // Resultado Screen
-    resultadoTitulo: 'Diagnóstico IA',
+    resultadoTitulo: 'Diagnóstico',
     resultadoSubtitulo: 'Análisis fitosanitario en tiempo real',
     analizando: 'Analizando hoja de papa con IA...',
     analizandoDesc: 'Buscando patrones de Punta Morada de la Papa (PMP)...',
-    sintomasDetectados: 'Síntomas Detectados',
-    recomendacionesAgro: 'Recomendaciones Agronómicas',
-    guardarAnalisis: 'Guardar en Historial',
-    guardarYSolicitar: 'Guardar y Pedir Revisión',
+    sintomasDetectados: 'Síntomas detectados',
+    recomendacionesAgro: 'Recomendaciones',
+    guardarAnalisis: 'Solo guardar',
+    guardarYSolicitar: 'Guardar y pedir revisión',
     analisisGuardado: '¡Análisis guardado exitosamente!',
     repetirFoto: 'Tomar otra foto',
 
