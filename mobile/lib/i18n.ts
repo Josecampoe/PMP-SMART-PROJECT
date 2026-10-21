@@ -231,7 +231,7 @@ export const translations = {
     cerrarSesion: 'Sign Out',
 
     // Camera Screen
-    camaraTitulo: 'Phytosanitary Scanner',
+    camaraTitulo: 'Analyze plant',
     camaraInstruccion: 'Center the suspicious leaf within frame under good lighting',
     tomarFoto: 'Capture',
     galeria: 'Gallery',
