@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { authApi } from '../../lib/api';
+import { Badge, Button, Card, Divider, Field, GroupLabel, IconButton, ScreenHeader, SettingsRow, Sheet } from '../../components/ui';
 
 export default function PerfilScreen() {
   const router = useRouter();
@@ -149,6 +150,56 @@ export default function PerfilScreen() {
   const toggleSeccion = (seccion: string) => {
     setSeccionGuiaAbierta(seccionGuiaAbierta === seccion ? null : seccion);
   };
+
+  const esTecnico = rolActivo === 'tecnico';
+
+  const abrirEditor = () => {
+    if (rolActivo === 'agricultor') {
+      setNombreAgr(perfilAgricultor?.nombre || '');
+      setFincaAgr(perfilAgricultor?.fincaPrincipal || '');
+      setUbicacionAgr(perfilAgricultor?.ubicacion || '');
+      setTelefonoAgr(perfilAgricultor?.telefono || '');
+      setEmailAgr(perfilAgricultor?.email || '');
+      setModalEditAgr(true);
+    } else {
+      setNombreTec(perfilTecnico?.nombre || '');
+      setRegTec(perfilTecnico?.registroProfesional || '');
+      setEspTec(perfilTecnico?.especialidad || '');
+      setEntidadTec(perfilTecnico?.entidad || '');
+      setTelefonoTec(perfilTecnico?.telefono || '');
+      setEmailTec(perfilTecnico?.email || '');
+      setModalEditTec(true);
+    }
+  };
+
+  const nombreMostrado = esTecnico
+    ? perfilTecnico?.nombre || (language === 'en' ? 'Plant Pathologist Agronomist' : 'Ing. Agrónomo Fitosanitario')
+    : perfilAgricultor?.nombre || (language === 'en' ? 'Potato Grower' : 'Productor de Papa');
+  const iniciales = nombreMostrado
+    .split(' ')
+    .filter((p) => p && /[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(p[0]))
+    .slice(0, 2)
+    .map((p) => p[0].toUpperCase())
+    .join('');
+
+  const contacto = esTecnico
+    ? [
+        { icon: 'ribbon-outline' as const, text: perfilTecnico?.registroProfesional || 'ICA-COL' },
+        { icon: 'business-outline' as const, text: `${perfilTecnico?.especialidad || 'Sanidad Vegetal'} · ${perfilTecnico?.entidad || 'Asistencia Técnica'}` },
+        { icon: 'call-outline' as const, text: perfilTecnico?.telefono || (language === 'en' ? 'No phone registered' : 'Teléfono no registrado'), muted: !perfilTecnico?.telefono },
+        { icon: 'mail-outline' as const, text: perfilTecnico?.email || (language === 'en' ? 'No email registered' : 'Correo no registrado'), muted: !perfilTecnico?.email },
+      ]
+    : [
+        { icon: 'home-outline' as const, text: `${perfilAgricultor?.fincaPrincipal || 'Finca'} · ${perfilAgricultor?.ubicacion || 'Colombia'}` },
+        { icon: 'call-outline' as const, text: perfilAgricultor?.telefono || (language === 'en' ? 'No phone registered' : 'Teléfono no registrado'), muted: !perfilAgricultor?.telefono },
+        { icon: 'mail-outline' as const, text: perfilAgricultor?.email || (language === 'en' ? 'No email registered' : 'Correo no registrado'), muted: !perfilAgricultor?.email },
+      ];
+
+  const guia = [
+    { id: 'que-es', icon: 'help-circle-outline' as const, title: t('guiaPmpQueEs'), body: t('guiaPmpQueEsDesc') },
+    { id: 'sintomas', icon: 'eye-outline' as const, title: t('guiaPmpSintomas'), body: t('guiaPmpSintomasDesc') },
+    { id: 'control', icon: 'shield-outline' as const, title: t('guiaPmpControl'), body: t('guiaPmpControlDesc') },
+  ];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
@@ -557,160 +608,44 @@ export default function PerfilScreen() {
         </Text>
       </ScrollView>
 
-      {/* MODAL EDITAR AGRICULTOR */}
-      <Modal visible={modalEditAgr} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, maxHeight: '90%' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: theme.cardBorderSubtle }}>
-              <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
-                {language === 'en' ? 'Edit Farmer Details' : 'Editar Datos del Agricultor'}
-              </Text>
-              <TouchableOpacity onPress={() => setModalEditAgr(false)}>
-                <Ionicons name="close" size={22} color={theme.textMuted} />
-              </TouchableOpacity>
-            </View>
+      {/* Editar agricultor */}
+      <Sheet
+        visible={modalEditAgr}
+        onClose={() => setModalEditAgr(false)}
+        title={language === 'en' ? 'Edit profile' : 'Editar perfil'}
+        subtitle={t('rolAgricultor')}
+        footer={
+          <>
+            <Button label={t('cancelar')} variant="secondary" onPress={() => setModalEditAgr(false)} flex />
+            <Button label={t('guardar')} onPress={handleGuardarPerfilAgr} flex />
+          </>
+        }>
+        <Field label={language === 'en' ? 'Full name' : 'Nombre completo'} required icon="person-outline" value={nombreAgr} onChangeText={setNombreAgr} placeholder={language === 'en' ? 'Your real name' : 'Tu nombre real'} />
+        <Field label={language === 'en' ? 'Main farm' : 'Finca principal'} icon="home-outline" value={fincaAgr} onChangeText={setFincaAgr} placeholder={language === 'en' ? 'Farm name' : 'Nombre de tu finca'} />
+        <Field label={language === 'en' ? 'Location' : 'Municipio / ubicación'} icon="location-outline" value={ubicacionAgr} onChangeText={setUbicacionAgr} placeholder="Pasto, Nariño" />
+        <Field label={language === 'en' ? 'Phone' : 'Teléfono'} icon="call-outline" value={telefonoAgr} onChangeText={setTelefonoAgr} placeholder="+57..." keyboardType="phone-pad" />
+        <Field label={language === 'en' ? 'Email' : 'Correo electrónico'} icon="mail-outline" value={emailAgr} onChangeText={setEmailAgr} placeholder="correo@ejemplo.com" keyboardType="email-address" autoCapitalize="none" />
+      </Sheet>
 
-            <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 16 }}>
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                  {language === 'en' ? 'FULL NAME *' : 'NOMBRE COMPLETO *'}
-                </Text>
-                <TextInput
-                  value={nombreAgr}
-                  onChangeText={setNombreAgr}
-                  placeholder={language === 'en' ? 'Your real name' : 'Tu nombre real'}
-                  placeholderTextColor={theme.textMuted}
-                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                />
-              </View>
-
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                  {language === 'en' ? 'MAIN FARM' : 'FINCA PRINCIPAL'}
-                </Text>
-                <TextInput
-                  value={fincaAgr}
-                  onChangeText={setFincaAgr}
-                  placeholder={language === 'en' ? 'Farm name' : 'Nombre de tu finca'}
-                  placeholderTextColor={theme.textMuted}
-                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                />
-              </View>
-
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                  {language === 'en' ? 'LOCATION' : 'MUNICIPIO / UBICACIÓN'}
-                </Text>
-                <TextInput
-                  value={ubicacionAgr}
-                  onChangeText={setUbicacionAgr}
-                  placeholder="Pasto, Nariño"
-                  placeholderTextColor={theme.textMuted}
-                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                />
-              </View>
-
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                  {language === 'en' ? 'PHONE' : 'TELÉFONO'}
-                </Text>
-                <TextInput
-                  value={telefonoAgr}
-                  onChangeText={setTelefonoAgr}
-                  placeholder="+57..."
-                  keyboardType="phone-pad"
-                  placeholderTextColor={theme.textMuted}
-                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                />
-              </View>
-
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                  {language === 'en' ? 'EMAIL' : 'CORREO ELECTRÓNICO'}
-                </Text>
-                <TextInput
-                  value={emailAgr}
-                  onChangeText={setEmailAgr}
-                  placeholder="correo@ejemplo.com"
-                  keyboardType="email-address"
-                  placeholderTextColor={theme.textMuted}
-                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                />
-              </View>
-            </ScrollView>
-
-            <View style={{ flexDirection: 'row', gap: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: theme.cardBorderSubtle }}>
-              <TouchableOpacity
-                onPress={() => setModalEditAgr(false)}
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.cardBorder, alignItems: 'center' }}>
-                <Text style={{ color: theme.textSecondary, fontWeight: '700', fontSize: 13 }}>{t('cancelar')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleGuardarPerfilAgr}
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: theme.primary, alignItems: 'center' }}>
-                <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>{t('guardar')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL EDITAR TÉCNICO */}
-      <Modal visible={modalEditTec} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, maxHeight: '90%' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: theme.cardBorderSubtle }}>
-              <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
-                {language === 'en' ? 'Edit Agronomist Details' : 'Editar Datos del Técnico'}
-              </Text>
-              <TouchableOpacity onPress={() => setModalEditTec(false)}>
-                <Ionicons name="close" size={22} color={theme.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 16 }}>
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                  {language === 'en' ? 'FULL NAME *' : 'NOMBRE COMPLETO *'}
-                </Text>
-                <TextInput
-                  value={nombreTec}
-                  onChangeText={setNombreTec}
-                  placeholder={language === 'en' ? 'Your real name' : 'Tu nombre real'}
-                  placeholderTextColor={theme.textMuted}
-                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                />
-              </View>
-
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                  {language === 'en' ? 'PROFESSIONAL ID / REGISTRATION' : 'REGISTRO PROFESIONAL'}
-                </Text>
-                <TextInput
-                  value={regTec}
-                  onChangeText={setRegTec}
-                  placeholder="ICA-04821"
-                  placeholderTextColor={theme.textMuted}
-                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                />
-              </View>
-            </ScrollView>
-
-            <View style={{ flexDirection: 'row', gap: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: theme.cardBorderSubtle }}>
-              <TouchableOpacity
-                onPress={() => setModalEditTec(false)}
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.cardBorder, alignItems: 'center' }}>
-                <Text style={{ color: theme.textSecondary, fontWeight: '700', fontSize: 13 }}>{t('cancelar')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleGuardarPerfilTec}
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: isDarkMode ? '#2563EB' : '#1D4ED8', alignItems: 'center' }}>
-                <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>{t('guardar')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Editar técnico */}
+      <Sheet
+        visible={modalEditTec}
+        onClose={() => setModalEditTec(false)}
+        title={language === 'en' ? 'Edit profile' : 'Editar perfil'}
+        subtitle={t('rolTecnico')}
+        footer={
+          <>
+            <Button label={t('cancelar')} variant="secondary" onPress={() => setModalEditTec(false)} flex />
+            <Button label={t('guardar')} onPress={handleGuardarPerfilTec} flex />
+          </>
+        }>
+        <Field label={language === 'en' ? 'Full name' : 'Nombre completo'} required icon="person-outline" value={nombreTec} onChangeText={setNombreTec} placeholder={language === 'en' ? 'Your real name' : 'Tu nombre real'} />
+        <Field label={language === 'en' ? 'Professional registration' : 'Registro profesional'} icon="ribbon-outline" value={regTec} onChangeText={setRegTec} placeholder="ICA-04821" autoCapitalize="characters" />
+        <Field label={language === 'en' ? 'Specialty' : 'Especialidad'} icon="flask-outline" value={espTec} onChangeText={setEspTec} placeholder={language === 'en' ? 'Plant Pathology' : 'Sanidad Vegetal'} />
+        <Field label={language === 'en' ? 'Organization' : 'Entidad'} icon="business-outline" value={entidadTec} onChangeText={setEntidadTec} placeholder={language === 'en' ? 'Technical Advisory' : 'Asistencia Técnica'} />
+        <Field label={language === 'en' ? 'Phone' : 'Teléfono'} icon="call-outline" value={telefonoTec} onChangeText={setTelefonoTec} placeholder="+57..." keyboardType="phone-pad" />
+        <Field label={language === 'en' ? 'Email' : 'Correo electrónico'} icon="mail-outline" value={emailTec} onChangeText={setEmailTec} placeholder="correo@ejemplo.com" keyboardType="email-address" autoCapitalize="none" />
+      </Sheet>
     </SafeAreaView>
   );
 }
