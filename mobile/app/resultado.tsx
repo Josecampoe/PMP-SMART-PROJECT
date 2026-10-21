@@ -14,9 +14,9 @@ export default function ResultadoScreen() {
     cultivoNombre?: string;
   }>();
 
-  const { addAnalisis, cultivos, currentImageB64, theme, isDarkMode, language, t } = useApp();
-  const [isSaving, setIsSaving] = useState(false);
+  const { addAnalisis, cultivos, currentImageB64, theme, language, t } = useApp();
   const insets = useSafeAreaInsets();
+  const [isSaving, setIsSaving] = useState(false);
 
   const displayImageUri = currentImageB64
     ? `data:image/jpeg;base64,${currentImageB64}`
@@ -86,7 +86,7 @@ export default function ResultadoScreen() {
     'Solicitar dictamen técnico a un agrónomo para formular plan de control fitosanitario.',
   ]);
 
-  const diagnosticoTexto = aiData?.diagnostico || (language === 'en' ? 'POSSIBLE PMP' : 'POSIBLE PMP');
+  const diagnosticoTexto = aiData?.diagnostico || (language === 'en' ? 'Possible PMP' : 'Posible PMP');
   const confianzaNum = aiData?.confianza || 92;
   const estadoVisual = aiData?.estado || 'alerta';
 
@@ -128,7 +128,7 @@ export default function ResultadoScreen() {
   const bloqueado = isSaving || isProcessing || !!apiError;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
       {/* Encabezado */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center' }}>
         <IconButton icon="chevron-back" onPress={() => router.back()} accessibilityLabel={language === 'en' ? 'Back' : 'Volver'} />
@@ -141,201 +141,131 @@ export default function ResultadoScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Content */}
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 130 }}
-        showsVerticalScrollIndicator={false}>
-
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+        {/* Foto */}
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          {/* Image */}
-          <View
-            style={{
-              height: 210,
-              borderRadius: 20,
-              overflow: 'hidden',
-              marginBottom: 16,
-              backgroundColor: theme.cardBorder,
-              borderWidth: 1,
-              borderColor: theme.cardBorder,
-            }}>
-            <Image
-              source={{ uri: displayImageUri }}
-              style={{ width: '100%', height: '100%' }}
-              resizeMode="cover"
-            />
-            <View
-              style={{
-                position: 'absolute',
-                bottom: 12,
-                left: 12,
-                backgroundColor: 'rgba(0,0,0,0.65)',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 10,
-              }}>
-              <Text style={{ fontSize: 12, color: 'white', fontWeight: '600' }}>
-                {finalCultivoNombre}
-              </Text>
-            </View>
+          <View style={{ height: 230, borderRadius: 22, overflow: 'hidden', marginBottom: 16, backgroundColor: theme.surfaceAlt }}>
+            <Image source={{ uri: displayImageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            {!isProcessing && !apiError && (
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 12,
+                  bottom: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(0,0,0,0.6)',
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 999,
+                }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: isAlerta ? '#F0B64A' : '#6DBF71', marginRight: 6 }} />
+                <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: '600' }}>
+                  {confianzaNum}% {language === 'en' ? 'match' : 'coincidencia'}
+                </Text>
+              </View>
+            )}
           </View>
         </Animated.View>
 
-        {/* Loading / Error / Result */}
         <Animated.View style={{ opacity: isProcessing ? fadeAnim : resultFade }}>
           {isProcessing ? (
-            <View
-              style={{
-                backgroundColor: theme.card,
-                borderRadius: 20,
-                padding: 32,
-                alignItems: 'center',
-                borderWidth: 1,
-                borderColor: theme.cardBorder,
-                marginBottom: 16,
-              }}>
+            <Card padding={28} style={{ alignItems: 'center' }}>
               <ActivityIndicator size="large" color={theme.primary} />
-              <Text style={{ fontSize: 15, fontWeight: '700', color: theme.primary, marginTop: 16 }}>
-                {t('analizando')}
-              </Text>
-              <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4, textAlign: 'center' }}>
-                {t('analizandoDesc')}
-              </Text>
-            </View>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginTop: 16, textAlign: 'center' }}>{t('analizando')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textMuted, marginTop: 4, textAlign: 'center', lineHeight: 20 }}>{t('analizandoDesc')}</Text>
+            </Card>
           ) : apiError ? (
-            <View
-              style={{
-                backgroundColor: theme.dangerBg,
-                borderRadius: 20,
-                padding: 24,
-                alignItems: 'center',
-                borderWidth: 1,
-                borderColor: 'rgba(239, 68, 68, 0.3)',
-                marginBottom: 16,
-              }}>
-              <Ionicons name="warning" size={32} color={theme.danger} style={{ marginBottom: 10 }} />
-              <Text style={{ fontSize: 15, fontWeight: '800', color: theme.danger, marginBottom: 6 }}>
-                {language === 'en' ? 'Analysis Error' : 'Error en el análisis'}
+            <View style={{ backgroundColor: theme.dangerBg, borderRadius: 18, padding: 22, alignItems: 'center', borderWidth: 1, borderColor: theme.dangerBorder }}>
+              <IconTile icon="cloud-offline-outline" tone="danger" size={48} />
+              <Text style={{ fontSize: 16, fontWeight: '800', color: theme.danger, marginTop: 12, marginBottom: 4 }}>
+                {language === 'en' ? 'Analysis error' : 'Error en el análisis'}
               </Text>
-              <Text style={{ fontSize: 12, color: theme.text, textAlign: 'center', lineHeight: 18 }}>
-                {apiError}
-              </Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, textAlign: 'center', lineHeight: 20 }}>{apiError}</Text>
             </View>
           ) : (
             <>
-              {/* Diagnosis Card */}
+              {/* Diagnóstico */}
               <View
                 style={{
                   backgroundColor: isAlerta ? theme.warningBg : theme.primaryLight,
                   borderRadius: 20,
-                  padding: 22,
-                  alignItems: 'center',
+                  padding: 18,
                   borderWidth: 1,
-                  borderColor: isAlerta ? 'rgba(245, 158, 11, 0.4)' : theme.primaryLightBorder,
+                  borderColor: isAlerta ? theme.warningBorder : theme.primaryLightBorder,
                   marginBottom: 16,
                 }}>
-                <View
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
-                    backgroundColor: isAlerta ? theme.warning : theme.primary,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 12,
-                  }}>
-                  <Ionicons
-                    name={isAlerta ? 'alert' : 'checkmark'}
-                    size={24}
-                    color="white"
-                  />
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: isAlerta ? theme.warning : theme.primary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <Ionicons name={isAlerta ? 'alert' : 'checkmark'} size={26} color={isAlerta ? '#1F1400' : theme.onPrimary} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 14 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: isAlerta ? theme.warning : theme.primary }}>
+                      {language === 'en' ? 'Result' : 'Resultado'}
+                    </Text>
+                    <Text style={{ fontSize: 21, fontWeight: '800', color: theme.text, letterSpacing: -0.4 }}>{diagnosticoTexto}</Text>
+                  </View>
                 </View>
-                <Text
-                  style={{
-                    fontSize: 19,
-                    fontWeight: '800',
-                    color: isAlerta ? theme.warning : theme.primary,
-                    marginBottom: 6,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                  }}>
-                  {diagnosticoTexto}
-                </Text>
-                <View
-                  style={{
-                    backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)',
-                    paddingHorizontal: 12,
-                    paddingVertical: 5,
-                    borderRadius: 20,
-                    marginBottom: 12,
-                  }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: theme.text }}>
-                    {confianzaNum}% {language === 'en' ? 'confidence' : 'coincidencia'}
-                  </Text>
+
+                {/* Barra de confianza */}
+                <View style={{ marginTop: 16 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <Text style={{ fontSize: 13, color: theme.textSecondary }}>{language === 'en' ? 'Confidence' : 'Coincidencia'}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>{confianzaNum}%</Text>
+                  </View>
+                  <View style={{ height: 6, borderRadius: 3, backgroundColor: theme.card, overflow: 'hidden' }}>
+                    <View style={{ width: `${Math.max(0, Math.min(100, confianzaNum))}%`, height: '100%', borderRadius: 3, backgroundColor: isAlerta ? theme.warning : theme.primary }} />
+                  </View>
                 </View>
-                <Text style={{ fontSize: 12, color: theme.textSecondary, textAlign: 'center', lineHeight: 18 }}>
+
+                <Text style={{ fontSize: 14, color: theme.textSecondary, lineHeight: 20, marginTop: 14 }}>
                   {isAlerta
-                    ? (language === 'en'
-                        ? 'Visual patterns consistent with Potato Purple Top / Zebra Chip detected. Request agronomist review to confirm.'
-                        : 'Se detectaron patrones compatibles con Punta Morada. Solicita una revisión técnica para confirmar.')
-                    : (language === 'en'
-                        ? 'No Potato Purple Top patterns identified. Maintain periodic scouting.'
-                        : 'No se detectaron patrones de Punta Morada. Mantén el monitoreo periódico.')}
+                    ? language === 'en'
+                      ? 'Visual patterns consistent with Potato Purple Top / Zebra Chip detected. Request agronomist review to confirm.'
+                      : 'Se detectaron patrones compatibles con Punta Morada. Solicita una revisión técnica para confirmar.'
+                    : language === 'en'
+                    ? 'No Potato Purple Top patterns identified. Maintain periodic scouting.'
+                    : 'No se detectaron patrones de Punta Morada. Mantén el monitoreo periódico.'}
                 </Text>
               </View>
 
-              {/* Symptoms */}
-              <View
-                style={{
-                  backgroundColor: theme.card,
-                  borderRadius: 20,
-                  padding: 18,
-                  borderWidth: 1,
-                  borderColor: theme.cardBorder,
-                  marginBottom: 14,
-                }}>
-                <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-                  {t('sintomasDetectados')}
-                </Text>
+              {/* Síntomas */}
+              <Card style={{ marginBottom: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                  <IconTile icon="eye-outline" tone={isAlerta ? 'warning' : 'success'} size={32} />
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginLeft: 10 }}>{t('sintomasDetectados')}</Text>
+                </View>
                 {sintomasDetectados.map((sintoma: string, idx: number) => (
-                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <View
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: 3,
-                        backgroundColor: isAlerta ? theme.warning : theme.primary,
-                        marginTop: 6,
-                        marginRight: 10,
-                      }}
-                    />
-                    <Text style={{ fontSize: 13, color: theme.text, flex: 1, lineHeight: 18 }}>{sintoma}</Text>
+                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: isAlerta ? theme.warning : theme.primary, marginTop: 7, marginRight: 10 }} />
+                    <Text style={{ fontSize: 14, color: theme.textSecondary, flex: 1, lineHeight: 20 }}>{sintoma}</Text>
                   </View>
                 ))}
-              </View>
+              </Card>
 
-              {/* Recommendations */}
-              <View
-                style={{
-                  backgroundColor: theme.card,
-                  borderRadius: 20,
-                  padding: 18,
-                  borderWidth: 1,
-                  borderColor: theme.cardBorder,
-                  marginBottom: 16,
-                }}>
-                <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-                  {t('recomendacionesAgro')}
-                </Text>
+              {/* Recomendaciones */}
+              <Card>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                  <IconTile icon="clipboard-outline" tone="info" size={32} />
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginLeft: 10 }}>{t('recomendacionesAgro')}</Text>
+                </View>
                 {recomendacionesAgro.map((rec: string, idx: number) => (
                   <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: theme.primary, marginRight: 8, width: 18 }}>
-                      {idx + 1}.
-                    </Text>
-                    <Text style={{ fontSize: 13, color: theme.text, flex: 1, lineHeight: 18 }}>{rec}</Text>
+                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: theme.primaryLight, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: theme.primary }}>{idx + 1}</Text>
+                    </View>
+                    <Text style={{ fontSize: 14, color: theme.textSecondary, flex: 1, lineHeight: 20 }}>{rec}</Text>
                   </View>
                 ))}
-              </View>
+              </Card>
             </>
           )}
         </Animated.View>
