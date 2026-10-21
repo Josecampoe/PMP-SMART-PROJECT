@@ -343,3 +343,84 @@ export function GroupLabel({ children }: { children: string }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Campo de texto con etiqueta
+// ---------------------------------------------------------------------------
+export function Field({
+  label,
+  required,
+  icon,
+  right,
+  hint,
+  style,
+  inputStyle,
+  ...inputProps
+}: TextInputProps & {
+  label?: string;
+  required?: boolean;
+  icon?: IconName;
+  right?: React.ReactNode;
+  hint?: string;
+  style?: StyleProp<ViewStyle>;
+  inputStyle?: TextInputProps['style'];
+}) {
+  const { theme } = useApp();
+  const [focused, setFocused] = useState(false);
+  return (
+    <View style={[{ marginBottom: 14 }, style]}>
+      {label ? (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: theme.textSecondary }}>
+            {label}
+            {required ? <Text style={{ color: theme.danger }}> *</Text> : null}
+          </Text>
+          {right}
+        </View>
+      ) : null}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: inputProps.multiline ? 'flex-start' : 'center',
+          backgroundColor: theme.inputBg,
+          borderWidth: 1,
+          borderColor: focused ? theme.primary : theme.inputBorder,
+          borderRadius: radius.md,
+          paddingHorizontal: 14,
+        }}>
+        {icon ? (
+          <Ionicons
+            name={icon}
+            size={17}
+            color={focused ? theme.primary : theme.textMuted}
+            style={{ marginRight: 10, marginTop: inputProps.multiline ? 13 : 0 }}
+          />
+        ) : null}
+        <TextInput
+          placeholderTextColor={theme.textMuted}
+          {...inputProps}
+          onFocus={(e) => {
+            setFocused(true);
+            inputProps.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            inputProps.onBlur?.(e);
+          }}
+          style={[
+            {
+              flex: 1,
+              paddingVertical: 12,
+              fontSize: 15,
+              color: theme.text,
+              minHeight: inputProps.multiline ? 88 : undefined,
+              textAlignVertical: inputProps.multiline ? 'top' : 'center',
+            },
+            inputStyle,
+          ]}
+        />
+      </View>
+      {hint ? <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 5 }}>{hint}</Text> : null}
+    </View>
+  );
+}
+
