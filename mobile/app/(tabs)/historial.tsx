@@ -278,7 +278,7 @@ export default function Historial() {
           title={language === 'en' ? 'Phytosanitary report' : 'Reporte fitosanitario'}
           subtitle={`${selectedAnalisis.cultivoNombre || ''}${selectedAnalisis.fecha ? ` · ${selectedAnalisis.fecha}` : ''}`}>
           <View style={{ width: '100%', height: 200, borderRadius: 18, overflow: 'hidden', marginBottom: 16, backgroundColor: theme.surfaceAlt }}>
-            <Image source={{ uri: selectedAnalisis.imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            <Image source={{ uri: selectedAnalisis.imageUri || 'https://images.unsplash.com/photo-1555431189-0ab279e2be3a' }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
           </View>
 
           {/* Diagnóstico */}
