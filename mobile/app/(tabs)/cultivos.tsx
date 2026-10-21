@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Share } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Share, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -41,6 +41,7 @@ export default function CultivosScreen() {
     desvincularParcela,
     setSelectedCultivoId,
     analisisHistorial,
+    refreshData,
     theme,
     language,
     t,
@@ -56,6 +57,15 @@ export default function CultivosScreen() {
   const [ubicacion, setUbicacion] = useState('');
   const [fechaSiembra, setFechaSiembra] = useState('');
   const [isLocating, setIsLocating] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleCompartirParcela = async (cultivo: Cultivo) => {
     try {
@@ -245,7 +255,8 @@ export default function CultivosScreen() {
         }
       />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40 }} showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />}>
         {/* Resumen */}
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
           <StatTile value={totalHectareas.toFixed(1)} label={language === 'en' ? 'Hectares' : 'Hectáreas'} icon="resize-outline" tone="neutral" />
