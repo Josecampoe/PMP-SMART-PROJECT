@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Modal,
-  TextInput,
-  Alert,
-  ActivityIndicator,
-  Share,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -52,7 +42,6 @@ export default function CultivosScreen() {
     setSelectedCultivoId,
     analisisHistorial,
     theme,
-    isDarkMode,
     language,
     t,
   } = useApp();
@@ -224,30 +213,15 @@ export default function CultivosScreen() {
     });
   };
 
-  const getBadgeEstado = (estado: Cultivo['estadoFitosanitario']) => {
+  const getBadgeEstado = (estado: Cultivo['estadoFitosanitario']): { text: string; tone: Tone } => {
     switch (estado) {
       case 'alerta':
-        return {
-          text: t('estadoAlerta'),
-          bg: theme.warningBg,
-          textColor: theme.warning,
-          dotColor: theme.warning,
-        };
+        return { text: t('estadoAlerta'), tone: 'warning' };
       case 'observacion':
-        return {
-          text: t('estadoRevision'),
-          bg: isDarkMode ? 'rgba(59, 130, 246, 0.15)' : '#EFF6FF',
-          textColor: '#3B82F6',
-          dotColor: '#3B82F6',
-        };
+        return { text: t('estadoRevision'), tone: 'info' };
       case 'optimo':
       default:
-        return {
-          text: t('estadoOptimo'),
-          bg: theme.primaryLight,
-          textColor: theme.primary,
-          dotColor: theme.primary,
-        };
+        return { text: t('estadoOptimo'), tone: 'success' };
     }
   };
 
@@ -258,7 +232,7 @@ export default function CultivosScreen() {
   const esTecnico = rolActivo === 'tecnico';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
       <ScreenHeader
         title={esTecnico ? (language === 'en' ? 'Surveillance' : 'Vigilancia') : (language === 'en' ? 'My plots' : 'Mis parcelas')}
         subtitle={t('cultivosSubtitulo')}
@@ -271,83 +245,37 @@ export default function CultivosScreen() {
         }
       />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-        {/* 2. RESUMEN DE INDICADORES (KPIs) */}
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-          <View style={{ flex: 1, backgroundColor: theme.card, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: theme.cardBorder }}>
-            <Text style={{ fontSize: 10, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              {language === 'en' ? 'SURFACE' : 'SUPERFICIE'}
-            </Text>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: theme.text, marginTop: 4 }}>
-              {totalHectareas.toFixed(1)} <Text style={{ fontSize: 11, color: theme.textMuted }}>{t('ha')}</Text>
-            </Text>
-          </View>
-
-          <View style={{ flex: 1, backgroundColor: theme.card, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: theme.cardBorder }}>
-            <Text style={{ fontSize: 10, fontWeight: '800', color: theme.warning, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              {language === 'en' ? 'ALERTS' : 'ALERTAS'}
-            </Text>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: theme.warning, marginTop: 4 }}>
-              {cultivosEnAlerta}
-            </Text>
-          </View>
-
-          <View style={{ flex: 1, backgroundColor: theme.card, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: theme.cardBorder }}>
-            <Text style={{ fontSize: 10, fontWeight: '800', color: theme.primary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              {language === 'en' ? 'HEALTHY' : 'SANOS'}
-            </Text>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: theme.primary, marginTop: 4 }}>
-              {cultivosOptimos}
-            </Text>
-          </View>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {/* Resumen */}
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
+          <StatTile value={totalHectareas.toFixed(1)} label={language === 'en' ? 'Hectares' : 'Hectáreas'} icon="resize-outline" tone="neutral" />
+          <StatTile value={cultivosEnAlerta} label={language === 'en' ? 'Alerts' : 'Alertas'} icon="warning-outline" tone="warning" />
+          <StatTile value={cultivosOptimos} label={language === 'en' ? 'Healthy' : 'Sanas'} icon="checkmark-circle-outline" tone="primary" />
         </View>
 
-        {/* 3. LISTADO DE CULTIVOS */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 }}>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-            {language === 'en' ? `REGISTERED PLOTS (${cultivos.length})` : `PARCELAS REGISTRADAS (${cultivos.length})`}
-          </Text>
-        </View>
+        <SectionTitle title={language === 'en' ? `Registered plots · ${cultivos.length}` : `Parcelas registradas · ${cultivos.length}`} />
 
         {cultivos.length === 0 ? (
-          <View style={{ backgroundColor: theme.card, borderRadius: 24, padding: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.cardBorder }}>
-            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: theme.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-              <Ionicons name={rolActivo === 'tecnico' ? 'shield-checkmark' : 'leaf'} size={28} color={theme.primary} />
-            </View>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: theme.text, textAlign: 'center', marginBottom: 6 }}>
-              {rolActivo === 'tecnico'
-                ? (language === 'en' ? 'No Plots Under Surveillance' : 'Sin parcelas bajo vigilancia')
-                : t('sinCultivos')}
-            </Text>
-            <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginBottom: 20, lineHeight: 18 }}>
-              {rolActivo === 'tecnico'
-                ? (language === 'en'
-                    ? 'Enter a plot code provided by a farmer to monitor and audit their potato field.'
-                    : 'Ingresa el código único de la parcela del agricultor para comenzar su vigilancia agronómica.')
-                : (language === 'en'
-                    ? 'Add your potato field plots to keep track of AI phytosanitary scans.'
-                    : 'Añade tu primera parcela para empezar a llevar el control fitosanitario con la cámara de IA.')}
-            </Text>
-            {rolActivo === 'agricultor' ? (
-              <TouchableOpacity
-                onPress={() => setModalVisible(true)}
-                style={{ backgroundColor: theme.primary, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 14, flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="add" size={16} color="white" />
-                <Text style={{ color: 'white', fontSize: 13, fontWeight: '700', marginLeft: 6 }}>
-                  {t('agregarParcelaBtn')}
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={() => setModalVincularVisible(true)}
-                style={{ backgroundColor: isDarkMode ? '#2563EB' : '#1D4ED8', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 14, flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="key-outline" size={16} color="white" />
-                <Text style={{ color: 'white', fontSize: 13, fontWeight: '700', marginLeft: 6 }}>
-                  {language === 'en' ? 'Enter Plot Code' : 'Ingresar código de parcela'}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <EmptyState
+            icon={esTecnico ? 'shield-checkmark-outline' : 'leaf-outline'}
+            title={esTecnico ? (language === 'en' ? 'No plots under surveillance' : 'Sin parcelas bajo vigilancia') : t('sinCultivos')}
+            description={
+              esTecnico
+                ? language === 'en'
+                  ? 'Enter a plot code provided by a farmer to monitor and audit their potato field.'
+                  : 'Ingresa el código único de la parcela del agricultor para comenzar su vigilancia agronómica.'
+                : language === 'en'
+                ? 'Add your potato field plots to keep track of phytosanitary scans.'
+                : 'Añade tu primera parcela para empezar a llevar el control fitosanitario con la cámara.'
+            }
+            action={
+              esTecnico ? (
+                <Button label={language === 'en' ? 'Enter plot code' : 'Ingresar código de parcela'} icon="key-outline" onPress={() => setModalVincularVisible(true)} />
+              ) : (
+                <Button label={t('agregarParcelaBtn')} icon="add" onPress={() => setModalVisible(true)} />
+              )
+            }
+          />
         ) : (
           cultivos.map((cultivo) => {
             const badge = getBadgeEstado(cultivo.estadoFitosanitario);
@@ -355,204 +283,90 @@ export default function CultivosScreen() {
               (a) => a.cultivoId === cultivo.id || a.cultivoNombre === cultivo.nombre
             );
             return (
-              <View
-                key={cultivo.id}
-                style={{
-                  backgroundColor: theme.card,
-                  borderRadius: 20,
-                  padding: 16,
-                  marginBottom: 12,
-                  borderWidth: 1,
-                  borderColor: theme.cardBorder,
-                }}>
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <View style={{ flex: 1, marginRight: 10 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '800', color: theme.text, marginBottom: 4 }}>
+              <Card key={cultivo.id} style={{ marginBottom: 14 }} padding={0}>
+                {/* Encabezado de la tarjeta */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, paddingBottom: 12 }}>
+                  <IconTile icon="leaf" tone={badge.tone} size={44} />
+                  <View style={{ flex: 1, marginLeft: 12, marginRight: 8 }}>
+                    <Text style={{ fontSize: 17, fontWeight: '700', color: theme.text, letterSpacing: -0.2 }} numberOfLines={1}>
                       {cultivo.nombre}
                     </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Ionicons name="location-outline" size={12} color={theme.textMuted} />
-                      <Text style={{ fontSize: 11, color: theme.textMuted, marginLeft: 4 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3 }}>
+                      <Ionicons name="location-outline" size={13} color={theme.textMuted} />
+                      <Text style={{ fontSize: 13, color: theme.textMuted, marginLeft: 3, flexShrink: 1 }} numberOfLines={1}>
                         {cultivo.ubicacion}
                       </Text>
                     </View>
                   </View>
-
-                  <View style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, backgroundColor: badge.bg, flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: badge.dotColor, marginRight: 6 }} />
-                    <Text style={{ fontSize: 10, fontWeight: '800', color: badge.textColor }}>
-                      {badge.text}
-                    </Text>
-                  </View>
+                  <Badge label={badge.text} tone={badge.tone} dot />
                 </View>
 
-                {/* Detalles de la parcela */}
-                <View style={{ backgroundColor: theme.inputBg, borderRadius: 14, padding: 12, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', borderWidth: 1, borderColor: theme.cardBorderSubtle }}>
-                  <View>
-                    <Text style={{ fontSize: 9, color: theme.textMuted, fontWeight: '800', textTransform: 'uppercase' }}>
-                      {language === 'en' ? 'VARIETY' : 'VARIEDAD'}
-                    </Text>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: theme.text, marginTop: 2 }}>
-                      {cultivo.variedad}
-                    </Text>
-                  </View>
-                  <View style={{ borderLeftWidth: 1, borderLeftColor: theme.cardBorderSubtle, paddingLeft: 12 }}>
-                    <Text style={{ fontSize: 9, color: theme.textMuted, fontWeight: '800', textTransform: 'uppercase' }}>
-                      {language === 'en' ? 'AREA' : 'ÁREA'}
-                    </Text>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: theme.text, marginTop: 2 }}>
-                      {cultivo.hectareas} {t('ha')}
-                    </Text>
-                  </View>
-                  <View style={{ borderLeftWidth: 1, borderLeftColor: theme.cardBorderSubtle, paddingLeft: 12 }}>
-                    <Text style={{ fontSize: 9, color: theme.textMuted, fontWeight: '800', textTransform: 'uppercase' }}>
-                      {t('metricasEscaneos')}
-                    </Text>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: theme.text, marginTop: 2 }}>
-                      {analisisDeEsteLote.length}
-                    </Text>
-                  </View>
+                {/* Datos */}
+                <View style={{ flexDirection: 'row', marginHorizontal: 16, backgroundColor: theme.surfaceAlt, borderRadius: 14, paddingVertical: 12 }}>
+                  {[
+                    { label: language === 'en' ? 'Variety' : 'Variedad', value: (cultivo.variedad || '').replace(/^Papa\s+/i, '') },
+                    { label: language === 'en' ? 'Area' : 'Área', value: `${cultivo.hectareas} ${t('ha')}` },
+                    { label: language === 'en' ? 'Scans' : 'Escaneos', value: String(analisisDeEsteLote.length) },
+                  ].map((d, i) => (
+                    <View key={d.label} style={{ flex: i === 0 ? 1.6 : 1, paddingHorizontal: 12, borderLeftWidth: i > 0 ? 1 : 0, borderLeftColor: theme.cardBorder }}>
+                      <Text style={{ fontSize: 12, color: theme.textMuted }}>{d.label}</Text>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text, marginTop: 2 }} numberOfLines={1}>
+                        {d.value}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
 
-                {/* Código Único de Parcela y Compartir */}
+                {/* Código de acceso */}
                 <View
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    backgroundColor: rolActivo === 'tecnico'
-                      ? (isDarkMode ? 'rgba(59, 130, 246, 0.12)' : '#EFF6FF')
-                      : (isDarkMode ? 'rgba(16, 185, 129, 0.12)' : '#F0FDF4'),
-                    borderWidth: 1,
-                    borderColor: rolActivo === 'tecnico'
-                      ? (isDarkMode ? 'rgba(59, 130, 246, 0.3)' : '#DBEAFE')
-                      : (isDarkMode ? 'rgba(16, 185, 129, 0.3)' : '#DCFCE7'),
-                    paddingHorizontal: 12,
+                    marginHorizontal: 16,
+                    marginTop: 12,
+                    paddingHorizontal: 14,
                     paddingVertical: 10,
                     borderRadius: 14,
-                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderStyle: 'dashed',
+                    borderColor: theme.primaryLightBorder,
                   }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                    <Ionicons
-                      name={rolActivo === 'tecnico' ? 'shield-checkmark-outline' : 'key-outline'}
-                      size={16}
-                      color={rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary}
-                      style={{ marginRight: 8 }}
-                    />
-                    <View>
-                      <Text style={{ fontSize: 9, fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                        {rolActivo === 'tecnico'
-                          ? (language === 'en' ? 'MONITORED CODE' : 'CÓDIGO AUDITADO')
-                          : (language === 'en' ? 'ACCESS CODE' : 'CÓDIGO DE ACCESO')}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 15,
-                          fontWeight: '800',
-                          color: rolActivo === 'tecnico' ? (isDarkMode ? '#60A5FA' : '#2563EB') : theme.primary,
-                          letterSpacing: 2,
-                          marginTop: 1,
-                        }}>
-                        {cultivo.codigoAcceso || '---'}
-                      </Text>
-                    </View>
+                  <View>
+                    <Text style={{ fontSize: 12, color: theme.textMuted }}>
+                      {esTecnico ? (language === 'en' ? 'Monitored code' : 'Código auditado') : (language === 'en' ? 'Access code' : 'Código de acceso')}
+                    </Text>
+                    <Text style={{ fontSize: 17, fontWeight: '800', color: theme.primary, letterSpacing: 2.5, marginTop: 1 }}>
+                      {cultivo.codigoAcceso || '---'}
+                    </Text>
                   </View>
-
-                  {rolActivo === 'agricultor' ? (
-                    <TouchableOpacity
-                      onPress={() => handleCompartirParcela(cultivo)}
-                      activeOpacity={0.8}
-                      style={{
-                        backgroundColor: theme.primary,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        paddingHorizontal: 12,
-                        paddingVertical: 7,
-                        borderRadius: 10,
-                      }}>
-                      <Ionicons name="share-social" size={13} color="white" />
-                      <Text style={{ color: 'white', fontSize: 11, fontWeight: '700', marginLeft: 4 }}>
-                        {language === 'en' ? 'Share' : 'Compartir'}
-                      </Text>
-                    </TouchableOpacity>
+                  {esTecnico ? (
+                    <Button label={language === 'en' ? 'Unlink' : 'Desvincular'} variant="dangerSoft" size="sm" icon="close-circle-outline" onPress={() => handleDesvincular(cultivo)} />
                   ) : (
-                    <TouchableOpacity
-                      onPress={() => handleDesvincular(cultivo)}
-                      activeOpacity={0.8}
-                      style={{
-                        backgroundColor: theme.dangerBg,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        paddingHorizontal: 10,
-                        paddingVertical: 6,
-                        borderRadius: 10,
-                      }}>
-                      <Ionicons name="close-circle-outline" size={13} color={theme.danger} />
-                      <Text style={{ color: theme.danger, fontSize: 11, fontWeight: '700', marginLeft: 4 }}>
-                        {language === 'en' ? 'Unlink' : 'Desvincular'}
-                      </Text>
-                    </TouchableOpacity>
+                    <Button label={language === 'en' ? 'Share' : 'Compartir'} variant="soft" size="sm" icon="share-social-outline" onPress={() => handleCompartirParcela(cultivo)} />
                   )}
                 </View>
 
-                {/* Acciones */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text style={{ fontSize: 11, color: theme.textMuted }}>
-                    {language === 'en' ? 'Planted:' : 'Siembra:'} <Text style={{ color: theme.text, fontWeight: '600' }}>{cultivo.fechaSiembra}</Text>
-                  </Text>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    {rolActivo === 'agricultor' ? (
-                      <>
-                        <TouchableOpacity
-                          onPress={() => handleEliminarCultivo(cultivo)}
-                          style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 10,
-                            backgroundColor: theme.dangerBg,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}>
-                          <Ionicons name="trash-outline" size={16} color={theme.danger} />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          onPress={() => iniciarEscaneoCultivo(cultivo.id)}
-                          style={{
-                            backgroundColor: theme.primary,
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            paddingHorizontal: 12,
-                            paddingVertical: 8,
-                            borderRadius: 10,
-                          }}>
-                          <Ionicons name="camera" size={14} color="white" />
-                          <Text style={{ color: 'white', fontSize: 12, fontWeight: '700', marginLeft: 6 }}>
-                            {t('escanear')}
-                          </Text>
-                        </TouchableOpacity>
-                      </>
-                    ) : (
-                      <TouchableOpacity
-                        onPress={() => router.push('/(tabs)/historial')}
-                        style={{
-                          backgroundColor: isDarkMode ? '#2563EB' : '#1D4ED8',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                          borderRadius: 10,
-                        }}>
-                        <Ionicons name="clipboard-outline" size={14} color="white" />
-                        <Text style={{ color: 'white', fontSize: 12, fontWeight: '700', marginLeft: 6 }}>
-                          {language === 'en' ? 'View Diagnoses' : 'Ver diagnósticos'}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
+                {/* Pie */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                    <Ionicons name="calendar-outline" size={14} color={theme.textMuted} />
+                    <Text style={{ fontSize: 13, color: theme.textMuted, marginLeft: 5 }} numberOfLines={1}>
+                      {language === 'en' ? 'Planted ' : 'Siembra '}
+                      <Text style={{ color: theme.textSecondary, fontWeight: '600' }}>{cultivo.fechaSiembra}</Text>
+                    </Text>
                   </View>
+
+                  {esTecnico ? (
+                    <Button label={language === 'en' ? 'Diagnoses' : 'Diagnósticos'} size="sm" icon="time-outline" onPress={() => router.push('/(tabs)/historial')} />
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <IconButton icon="trash-outline" tone="danger" size={36} onPress={() => handleEliminarCultivo(cultivo)} accessibilityLabel={t('eliminarParcela')} />
+                      <Button label={t('escanear')} size="sm" icon="camera-outline" onPress={() => iniciarEscaneoCultivo(cultivo.id)} />
+                    </View>
+                  )}
                 </View>
-              </View>
+              </Card>
             );
           })
         )}
