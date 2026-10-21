@@ -15,6 +15,7 @@ import { useCallback } from 'react';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera';
+import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useApp } from '../context/AppContext';
@@ -162,52 +163,50 @@ export default function CameraScreen() {
     setSelectorVisible(false);
   };
 
+  const flashIcon = flash === 'on' ? 'flash' : flash === 'auto' ? 'flash-outline' : 'flash-off-outline';
+  const RETICLE = '#A5CF5F';
+
   if (!permission) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator size="large" color="#43A047" />
-        <Text className="text-white text-sm mt-3">Iniciando cámara...</Text>
+      <View style={{ flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
+        <StatusBar style="light" />
+        <ActivityIndicator size="large" color={RETICLE} />
+        <Text style={{ color: '#FFFFFF', fontSize: 14, marginTop: 12 }}>
+          {language === 'en' ? 'Starting camera...' : 'Iniciando cámara...'}
+        </Text>
       </View>
     );
   }
 
   if (!permission.granted) {
     return (
-      <SafeAreaView className="flex-1 bg-[#121815] px-6 justify-between py-10">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="flex-row items-center bg-white/10 self-start px-4 py-2 rounded-full">
-          <FontAwesome name="arrow-left" size={16} color="white" />
-          <Text className="text-white text-sm ml-2">Volver</Text>
-        </TouchableOpacity>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg, paddingHorizontal: 24, paddingVertical: 12 }}>
+        <IconButton icon="chevron-back" onPress={() => router.back()} accessibilityLabel={language === 'en' ? 'Back' : 'Volver'} />
 
-        <View className="items-center px-4">
-          <View className="w-24 h-24 rounded-full bg-[#2E7D32]/20 items-center justify-center border-2 border-[#43A047] mb-6">
-            <FontAwesome name="camera" size={40} color="#43A047" />
-          </View>
-          <Text className="text-white font-bold text-2xl text-center mb-3">
-            Acceso a la Cámara
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <IconTile icon="camera-outline" size={72} />
+          <Text style={{ fontSize: 26, fontWeight: '800', color: theme.text, marginTop: 24, letterSpacing: -0.5 }}>
+            {language === 'en' ? 'Camera access' : 'Acceso a la cámara'}
           </Text>
-          <Text className="text-gray-300 text-sm text-center leading-relaxed mb-8">
-            Para fotografiar y detectar síntomas de Punta Morada (PMP) en las hojas de tus cultivos
-            de papa, necesitamos tu permiso para utilizar la cámara.
+          <Text style={{ fontSize: 15, color: theme.textSecondary, lineHeight: 22, marginTop: 8, marginBottom: 28 }}>
+            {language === 'en'
+              ? 'To photograph your potato leaves and detect Purple Top symptoms, we need permission to use the camera.'
+              : 'Para fotografiar las hojas de tus cultivos de papa y detectar síntomas de Punta Morada, necesitamos permiso para usar la cámara.'}
           </Text>
-
-          <TouchableOpacity
-            onPress={requestPermission}
-            className="w-full bg-[#2E7D32] py-4 rounded-xl items-center shadow-lg active:scale-95 mb-4">
-            <Text className="text-white font-bold text-base">Permitir Cámara</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
+          <Button label={language === 'en' ? 'Allow camera' : 'Permitir cámara'} icon="camera" size="lg" onPress={requestPermission} />
+          <Button
+            label={language === 'en' ? 'Choose from gallery' : 'Elegir de la galería'}
+            icon="images-outline"
+            variant="secondary"
             onPress={pickImageFromGallery}
-            className="w-full bg-white/10 py-3.5 rounded-xl items-center border border-white/20 active:scale-95">
-            <Text className="text-gray-200 font-semibold text-sm">O elegir de la galería</Text>
-          </TouchableOpacity>
+            style={{ marginTop: 10 }}
+          />
         </View>
 
-        <Text className="text-gray-500 text-xs text-center">
-          Tus fotografías solo se procesan para el diagnóstico fitosanitario de tus parcelas.
+        <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', lineHeight: 18 }}>
+          {language === 'en'
+            ? 'Your photos are only used for the phytosanitary diagnosis of your plots.'
+            : 'Tus fotografías solo se usan para el diagnóstico fitosanitario de tus parcelas.'}
         </Text>
       </SafeAreaView>
     );
