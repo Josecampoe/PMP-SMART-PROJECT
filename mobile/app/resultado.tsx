@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator, Animated } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { analisisApi } from '../lib/api';
+import { Button, Card, IconButton, IconTile } from '../components/ui';
 
 export default function ResultadoScreen() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function ResultadoScreen() {
 
   const { addAnalisis, cultivos, currentImageB64, theme, isDarkMode, language, t } = useApp();
   const [isSaving, setIsSaving] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const displayImageUri = currentImageB64
     ? `data:image/jpeg;base64,${currentImageB64}`
@@ -122,6 +124,8 @@ export default function ResultadoScreen() {
   };
 
   const isAlerta = estadoVisual === 'alerta';
+
+  const bloqueado = isSaving || isProcessing || !!apiError;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
@@ -342,66 +346,28 @@ export default function ResultadoScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Bottom Actions */}
+      {/* Acciones */}
       <View
         style={{
           backgroundColor: theme.card,
           paddingHorizontal: 20,
           paddingTop: 12,
-          paddingBottom: 28,
+          paddingBottom: Math.max(insets.bottom, 14),
           borderTopWidth: 1,
           borderTopColor: theme.cardBorder,
+          gap: 10,
         }}>
-        <TouchableOpacity
+        <Button
+          label={isSaving ? (language === 'en' ? 'Saving...' : 'Guardando...') : t('guardarYSolicitar')}
+          icon="paper-plane-outline"
           onPress={() => handleGuardar(true)}
-          disabled={isSaving || isProcessing || !!apiError}
-          activeOpacity={0.85}
-          style={{
-            backgroundColor: '#1E40AF',
-            borderRadius: 16,
-            paddingVertical: 14,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 10,
-            opacity: isSaving || isProcessing || !!apiError ? 0.4 : 1,
-          }}>
-          <Ionicons name="paper-plane-outline" size={16} color="white" />
-          <Text style={{ color: 'white', fontWeight: '700', fontSize: 13, marginLeft: 8 }}>
-            {isSaving
-              ? (language === 'en' ? 'Saving...' : 'Guardando...')
-              : t('guardarYSolicitar')}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => handleGuardar(false)}
-          disabled={isSaving || isProcessing || !!apiError}
-          activeOpacity={0.85}
-          style={{
-            backgroundColor: theme.primary,
-            borderRadius: 16,
-            paddingVertical: 14,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 8,
-            opacity: isSaving || isProcessing || !!apiError ? 0.4 : 1,
-          }}>
-          <Ionicons name="bookmark-outline" size={16} color="white" />
-          <Text style={{ color: 'white', fontWeight: '700', fontSize: 13, marginLeft: 8 }}>
-            {t('guardarAnalisis')}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.back()}
-          disabled={isSaving || isProcessing}
-          style={{ paddingVertical: 6, alignItems: 'center' }}>
-          <Text style={{ color: theme.textMuted, fontWeight: '600', fontSize: 12 }}>
-            {t('repetirFoto')}
-          </Text>
-        </TouchableOpacity>
+          disabled={bloqueado}
+          size="lg"
+        />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Button label={t('guardarAnalisis')} icon="bookmark-outline" variant="secondary" onPress={() => handleGuardar(false)} disabled={bloqueado} flex />
+          <Button label={t('repetirFoto')} icon="camera-reverse-outline" variant="ghost" onPress={() => router.back()} disabled={isSaving || isProcessing} flex />
+        </View>
       </View>
     </SafeAreaView>
   );
