@@ -153,8 +153,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Cargar datos al iniciar
   // ==========================================
   useEffect(() => {
+    // Preferencias de apariencia e idioma: se restauran siempre, con o sin sesión
+    AsyncStorage.multiGet([CACHE_KEYS.THEME_MODE, CACHE_KEYS.LANGUAGE])
+      .then(([[, storedTheme], [, storedLang]]) => {
+        if (storedTheme === 'dark') setIsDarkMode(true);
+        if (storedLang === 'es' || storedLang === 'en') setLanguageState(storedLang);
+      })
+      .catch(() => {});
+
     loadAllData();
-    
+
     // Escuchar eventos de auth (login/logout)
     const unsubscribe = authEvents.subscribe(async (isAuthenticated) => {
       if (isAuthenticated) {
