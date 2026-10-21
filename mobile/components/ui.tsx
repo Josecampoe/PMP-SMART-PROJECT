@@ -58,3 +58,47 @@ export function useElevation(level: 1 | 2 = 1): ViewStyle {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Encabezado de pantalla
+// ---------------------------------------------------------------------------
+export function ScreenHeader({
+  title,
+  subtitle,
+  right,
+  eyebrow,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+  eyebrow?: string;
+}) {
+  const { theme } = useApp();
+  return (
+    <View
+      style={{
+        paddingHorizontal: 20,
+        paddingTop: 8,
+        paddingBottom: 14,
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        backgroundColor: theme.bg,
+      }}>
+      <View style={{ flex: 1, marginRight: 12 }}>
+        {eyebrow ? (
+          <Text style={{ fontSize: 13, fontWeight: '600', color: theme.primary, marginBottom: 2 }}>{eyebrow}</Text>
+        ) : null}
+        <Text style={{ fontSize: 28, fontWeight: '800', color: theme.text, letterSpacing: -0.6 }} numberOfLines={1}>
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text style={{ fontSize: 14, color: theme.textMuted, marginTop: 2 }} numberOfLines={2}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {right}
+    </View>
+  );
+}
+
