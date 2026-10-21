@@ -161,3 +161,40 @@ function Leaf({
   );
 }
 
+// ---------- Luciérnagas ----------
+function Firefly({ x, y, delay, range }: { x: number; y: number; delay: number; range: number }) {
+  const wander = useRef(new Animated.Value(0)).current;
+  const blink = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const w = loop(wander, 3200 + delay, delay);
+    const b = loop(blink, 900 + (delay % 700), delay / 2);
+    w.start();
+    b.start();
+    return () => {
+      w.stop();
+      b.stop();
+    };
+  }, []);
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        left: x,
+        top: y,
+        width: 10,
+        height: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: blink.interpolate({ inputRange: [0, 1], outputRange: [0.1, 1] }),
+        transform: [
+          { translateX: wander.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, range, -range * 0.4] }) },
+          { translateY: wander.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -range * 0.6, range * 0.5] }) },
+        ],
+      }}>
+      <View style={{ position: 'absolute', width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(230, 238, 156, 0.25)' }} />
+      <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#EEF5A6' }} />
+    </Animated.View>
+  );
+}
+
