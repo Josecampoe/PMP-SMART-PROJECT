@@ -1,22 +1,8 @@
 import { Router, Response } from 'express';
-import multer from 'multer';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = Router();
-
-// Multer para recibir imágenes en memoria
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB máx
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Solo se permiten archivos de imagen.'));
-    }
-  },
-});
 
 router.post('/procesar', async (req: AuthenticatedRequest, res: Response) => {
   try {
