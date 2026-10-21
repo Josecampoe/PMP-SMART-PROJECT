@@ -45,3 +45,16 @@ export function toneColors(theme: ThemeColors, tone: Tone) {
   }
 }
 
+/** Sombra suave solo en modo claro; en oscuro se usa el borde */
+export function useElevation(level: 1 | 2 = 1): ViewStyle {
+  const { theme, isDarkMode } = useApp();
+  if (isDarkMode) return {};
+  return {
+    shadowColor: theme.shadow,
+    shadowOffset: { width: 0, height: level === 1 ? 2 : 6 },
+    shadowOpacity: level === 1 ? 0.05 : 0.09,
+    shadowRadius: level === 1 ? 8 : 16,
+    elevation: level === 1 ? 1 : 4,
+  };
+}
+
