@@ -150,7 +150,7 @@ export const translations = {
 
     // Crops Screen
     cultivosTitulo: 'Plot Management',
-    cultivosSubtitulo: 'Monitor the health and condition of each crop lot',
+    cultivosSubtitulo: 'Health and status of each lot',
     nuevaParcela: 'New Plot',
     buscarParcela: 'Search plot or variety...',
     sinCultivos: 'No plots registered yet',
