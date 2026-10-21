@@ -15,6 +15,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { useApp, Cultivo } from '../../context/AppContext';
+import {
+  Badge,
+  Button,
+  Card,
+  Chip,
+  EmptyState,
+  Field,
+  IconButton,
+  IconTile,
+  ScreenHeader,
+  SectionTitle,
+  Sheet,
+  StatTile,
+  type Tone,
+} from '../../components/ui';
 
 const VARIEDADES_PAPA = [
   'Papa Pastusa Suprema',
@@ -577,206 +592,113 @@ export default function CultivosScreen() {
         )}
       </ScrollView>
 
-      {/* MODAL: REGISTRAR NUEVA PARCELA */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, maxHeight: '90%' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: theme.cardBorderSubtle }}>
-              <View>
-                <Text style={{ fontSize: 17, fontWeight: '800', color: theme.text }}>
-                  {t('nuevaParcela')}
-                </Text>
-                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
-                  {language === 'en' ? 'Register crop plot details' : 'Datos reales de tu cultivo de papa'}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={22} color={theme.textMuted} />
-              </TouchableOpacity>
-            </View>
+      {/* Registrar nueva parcela */}
+      <Sheet
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title={t('nuevaParcela')}
+        subtitle={language === 'en' ? 'Register crop plot details' : 'Datos reales de tu cultivo de papa'}
+        icon="leaf-outline"
+        footer={
+          <>
+            <Button label={t('cancelar')} variant="secondary" onPress={() => setModalVisible(false)} flex />
+            <Button label={t('guardar')} onPress={handleCrearCultivo} flex />
+          </>
+        }>
+        <Field
+          label={language === 'en' ? 'Plot name' : 'Nombre de la parcela'}
+          required
+          value={nombre}
+          onChangeText={setNombre}
+          placeholder={t('nombreParcelaPlaceholder')}
+        />
 
-            <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 16 }}>
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                  {language === 'en' ? 'PLOT NAME *' : 'NOMBRE DE PARCELA *'}
-                </Text>
-                <TextInput
-                  value={nombre}
-                  onChangeText={setNombre}
-                  placeholder={t('nombreParcelaPlaceholder')}
-                  placeholderTextColor={theme.textMuted}
-                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                />
-              </View>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: theme.textSecondary, marginBottom: 8 }}>
+          {language === 'en' ? 'Potato variety' : 'Variedad de papa'}
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 16, marginHorizontal: -20 }}
+          contentContainerStyle={{ paddingHorizontal: 20 }}>
+          {VARIEDADES_PAPA.map((v) => (
+            <Chip key={v} label={v.replace(/^Papa\s+/i, '')} selected={variedad === v} onPress={() => setVariedad(v)} />
+          ))}
+        </ScrollView>
 
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                  {language === 'en' ? 'POTATO VARIETY' : 'VARIEDAD DE PAPA'}
-                </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row', gap: 6, marginVertical: 4 }}>
-                  {VARIEDADES_PAPA.map((v) => (
-                    <TouchableOpacity
-                      key={v}
-                      onPress={() => setVariedad(v)}
-                      style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 7,
-                        borderRadius: 10,
-                        backgroundColor: variedad === v ? theme.primary : theme.inputBg,
-                        borderWidth: 1,
-                        borderColor: variedad === v ? theme.primary : theme.cardBorderSubtle,
-                        marginRight: 6,
-                      }}>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: variedad === v ? 'white' : theme.textSecondary }}>
-                        {v}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-
-              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                    {language === 'en' ? 'HECTARES *' : 'HECTÁREAS *'}
-                  </Text>
-                  <TextInput
-                    value={hectareas}
-                    onChangeText={setHectareas}
-                    placeholder="2.5"
-                    keyboardType="decimal-pad"
-                    placeholderTextColor={theme.textMuted}
-                    style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6 }}>
-                    {language === 'en' ? 'PLANTING DATE' : 'FECHA SIEMBRA'}
-                  </Text>
-                  <TextInput
-                    value={fechaSiembra}
-                    onChangeText={setFechaSiembra}
-                    placeholder="Ene 2026"
-                    placeholderTextColor={theme.textMuted}
-                    style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                  />
-                </View>
-              </View>
-
-              <View style={{ marginBottom: 14 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted }}>
-                    {language === 'en' ? 'LOCATION / GPS' : 'UBICACIÓN / GPS'}
-                  </Text>
-                  <TouchableOpacity onPress={obtenerUbicacionGPS} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {isLocating ? (
-                      <ActivityIndicator size="small" color={theme.primary} />
-                    ) : (
-                      <>
-                        <Ionicons name="navigate-outline" size={12} color={theme.primary} />
-                        <Text style={{ fontSize: 11, color: theme.primary, fontWeight: '700', marginLeft: 3 }}>
-                          {language === 'en' ? 'Detect GPS' : 'Detectar GPS'}
-                        </Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                </View>
-                <TextInput
-                  value={ubicacion}
-                  onChangeText={setUbicacion}
-                  placeholder={t('ubicacionPlaceholder')}
-                  placeholderTextColor={theme.textMuted}
-                  style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: theme.text }}
-                />
-              </View>
-            </ScrollView>
-
-            <View style={{ flexDirection: 'row', gap: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: theme.cardBorderSubtle }}>
-              <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.cardBorder, alignItems: 'center' }}>
-                <Text style={{ color: theme.textSecondary, fontWeight: '700', fontSize: 13 }}>{t('cancelar')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleCrearCultivo}
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: theme.primary, alignItems: 'center' }}>
-                <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>{t('guardar')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Field
+            style={{ flex: 1 }}
+            label={language === 'en' ? 'Hectares' : 'Hectáreas'}
+            required
+            value={hectareas}
+            onChangeText={setHectareas}
+            placeholder="2.5"
+            keyboardType="decimal-pad"
+          />
+          <Field
+            style={{ flex: 1 }}
+            label={language === 'en' ? 'Planting date' : 'Fecha de siembra'}
+            value={fechaSiembra}
+            onChangeText={setFechaSiembra}
+            placeholder="Ene 2026"
+          />
         </View>
-      </Modal>
 
-      {/* MODAL: VINCULAR PARCELA (TÉCNICO) */}
-      <Modal visible={modalVincularVisible} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 12,
-                    backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : '#DBEAFE',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: 10,
-                  }}>
-                  <Ionicons name="key-outline" size={18} color={isDarkMode ? '#60A5FA' : '#2563EB'} />
-                </View>
-                <Text style={{ fontSize: 18, fontWeight: '800', color: theme.text }}>
-                  {language === 'en' ? 'Link Plot by Code' : 'Vincular parcela por código'}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => setModalVincularVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <Ionicons name="close" size={22} color={theme.textMuted} />
-              </TouchableOpacity>
-            </View>
-            <Text style={{ fontSize: 13, color: theme.textSecondary, marginBottom: 18, lineHeight: 18 }}>
-              {language === 'en'
-                ? 'Enter the 6-character access code provided by the potato farmer to monitor this specific plot.'
-                : 'Ingresa el código único de 6 caracteres de la parcela del agricultor para agregarla a tu vigilancia fitosanitaria.'}
-            </Text>
-            <TextInput
-              value={codigoVincularInput}
-              onChangeText={setCodigoVincularInput}
-              placeholder="A7B9X2"
-              autoCapitalize="characters"
-              maxLength={6}
-              placeholderTextColor={theme.textMuted}
-              style={{
-                backgroundColor: theme.inputBg,
-                borderRadius: 14,
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                fontSize: 24,
-                fontWeight: '800',
-                textAlign: 'center',
-                letterSpacing: 8,
-                color: isDarkMode ? '#60A5FA' : '#2563EB',
-                marginBottom: 20,
-                borderWidth: 1,
-                borderColor: theme.inputBorder,
-              }}
-            />
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TouchableOpacity
-                onPress={() => setModalVincularVisible(false)}
-                style={{ flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: theme.cardBorder, alignItems: 'center' }}>
-                <Text style={{ color: theme.textSecondary, fontWeight: '700', fontSize: 13 }}>{t('cancelar')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleVincularParcela}
-                style={{ flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: isDarkMode ? '#2563EB' : '#1D4ED8', alignItems: 'center' }}>
-                <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>
-                  {language === 'en' ? 'Link Plot' : 'Vincular parcela'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <Field
+          label={language === 'en' ? 'Location' : 'Ubicación'}
+          icon="location-outline"
+          value={ubicacion}
+          onChangeText={setUbicacion}
+          placeholder={t('ubicacionPlaceholder')}
+          right={
+            <TouchableOpacity
+              onPress={obtenerUbicacionGPS}
+              disabled={isLocating}
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              {isLocating ? (
+                <ActivityIndicator size="small" color={theme.primary} />
+              ) : (
+                <>
+                  <Ionicons name="navigate" size={13} color={theme.primary} />
+                  <Text style={{ fontSize: 13, color: theme.primary, fontWeight: '700', marginLeft: 4 }}>
+                    {language === 'en' ? 'Use GPS' : 'Usar GPS'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          }
+        />
+      </Sheet>
+
+      {/* Vincular parcela (técnico) */}
+      <Sheet
+        visible={modalVincularVisible}
+        onClose={() => setModalVincularVisible(false)}
+        title={language === 'en' ? 'Link plot' : 'Vincular parcela'}
+        subtitle={language === 'en' ? 'Use the code shared by the farmer' : 'Usa el código que te compartió el agricultor'}
+        icon="key-outline"
+        footer={
+          <>
+            <Button label={t('cancelar')} variant="secondary" onPress={() => setModalVincularVisible(false)} flex />
+            <Button label={language === 'en' ? 'Link plot' : 'Vincular'} onPress={handleVincularParcela} flex />
+          </>
+        }>
+        <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 16, lineHeight: 20 }}>
+          {language === 'en'
+            ? 'Enter the 6-character access code provided by the potato farmer to monitor this specific plot.'
+            : 'Ingresa el código único de 6 caracteres de la parcela del agricultor para agregarla a tu vigilancia fitosanitaria.'}
+        </Text>
+        <Field
+          value={codigoVincularInput}
+          onChangeText={setCodigoVincularInput}
+          placeholder="A7B9X2"
+          autoCapitalize="characters"
+          maxLength={6}
+          inputStyle={{ fontSize: 26, fontWeight: '800', textAlign: 'center', letterSpacing: 8, paddingVertical: 14, color: theme.primary }}
+        />
+      </Sheet>
     </SafeAreaView>
   );
 }
