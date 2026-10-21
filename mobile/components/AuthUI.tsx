@@ -84,3 +84,31 @@ export function AuthField({
   );
 }
 
+export function AuthButton({ label, onPress, loading }: { label: string; onPress: () => void; loading?: boolean }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={loading}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      style={{
+        backgroundColor: AUTH.lime,
+        paddingVertical: 16,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        marginTop: 10,
+        opacity: loading ? 0.75 : 1,
+      }}>
+      {loading ? (
+        <ActivityIndicator color={AUTH.limeText} />
+      ) : (
+        <>
+          <Text style={{ color: AUTH.limeText, fontWeight: '700', fontSize: 16 }}>{label}</Text>
+          <FontAwesome name="arrow-right" size={14} color={AUTH.limeText} style={{ marginLeft: 10 }} />
+        </>
+      )}
+    </TouchableOpacity>
+  );
+}
