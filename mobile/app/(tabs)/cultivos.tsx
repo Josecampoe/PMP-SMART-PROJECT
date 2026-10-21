@@ -255,55 +255,21 @@ export default function CultivosScreen() {
   const cultivosEnAlerta = cultivos.filter((c) => c.estadoFitosanitario === 'alerta').length;
   const cultivosOptimos = cultivos.filter((c) => c.estadoFitosanitario === 'optimo').length;
 
+  const esTecnico = rolActivo === 'tecnico';
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
-      {/* 1. ENCABEZADO */}
-      <View style={{ backgroundColor: theme.bannerBg, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: 'white', letterSpacing: -0.3 }}>
-              {rolActivo === 'agricultor' ? (language === 'en' ? 'My Plots' : 'Mis Parcelas') : (language === 'en' ? 'Field Surveillance' : 'Vigilancia')}
-            </Text>
-            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '500', marginTop: 3 }}>
-              {t('cultivosSubtitulo')}
-            </Text>
-          </View>
-
-          {rolActivo === 'agricultor' ? (
-            <TouchableOpacity
-              onPress={() => setModalVisible(true)}
-              style={{
-                backgroundColor: theme.accent,
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 14,
-                paddingVertical: 9,
-                borderRadius: 14,
-              }}>
-              <Ionicons name="add" size={16} color="white" />
-              <Text style={{ color: 'white', fontSize: 12, fontWeight: '700', marginLeft: 4 }}>
-                {t('nuevaParcela')}
-              </Text>
-            </TouchableOpacity>
+      <ScreenHeader
+        title={esTecnico ? (language === 'en' ? 'Surveillance' : 'Vigilancia') : (language === 'en' ? 'My plots' : 'Mis parcelas')}
+        subtitle={t('cultivosSubtitulo')}
+        right={
+          esTecnico ? (
+            <IconButton icon="key-outline" filled onPress={() => setModalVincularVisible(true)} accessibilityLabel={language === 'en' ? 'Link plot' : 'Vincular parcela'} size={44} />
           ) : (
-            <TouchableOpacity
-              onPress={() => setModalVincularVisible(true)}
-              style={{
-                backgroundColor: isDarkMode ? '#2563EB' : '#1D4ED8',
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 14,
-                paddingVertical: 9,
-                borderRadius: 14,
-              }}>
-              <Ionicons name="key-outline" size={15} color="white" />
-              <Text style={{ color: 'white', fontSize: 12, fontWeight: '700', marginLeft: 6 }}>
-                {language === 'en' ? 'Link Plot' : 'Vincular parcela'}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+            <IconButton icon="add" filled onPress={() => setModalVisible(true)} accessibilityLabel={t('nuevaParcela')} size={44} />
+          )
+        }
+      />
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         {/* 2. RESUMEN DE INDICADORES (KPIs) */}
