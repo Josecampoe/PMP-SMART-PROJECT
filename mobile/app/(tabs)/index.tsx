@@ -16,6 +16,20 @@ import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../../context/AppContext';
 import { vinculosApi } from '../../lib/api';
+import {
+  Badge,
+  Button,
+  Card,
+  Divider,
+  EmptyState,
+  Field,
+  IconTile,
+  SectionTitle,
+  Sheet,
+  StatTile,
+  useElevation,
+  type Tone,
+} from '../../components/ui';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -651,211 +665,74 @@ export default function Inicio() {
         )}
       </ScrollView>
 
-      {/* MODAL: Nueva Parcela */}
-      <Modal visible={modalNuevoLote} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: theme.text }}>
-                {t('nuevaParcela')}
-              </Text>
-              <TouchableOpacity onPress={() => setModalNuevoLote(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <Ionicons name="close" size={22} color={theme.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ marginBottom: 14 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6, letterSpacing: 0.5 }}>
-                {language === 'en' ? 'NAME' : 'NOMBRE'}
-              </Text>
-              <TextInput
-                value={nombreLote}
-                onChangeText={setNombreLote}
-                placeholder={t('nombreParcelaPlaceholder')}
-                placeholderTextColor={theme.textMuted}
-                style={{
-                  backgroundColor: theme.inputBg,
-                  borderRadius: 12,
-                  paddingHorizontal: 14,
-                  paddingVertical: 12,
-                  fontSize: 14,
-                  color: theme.text,
-                  borderWidth: 1,
-                  borderColor: theme.inputBorder,
-                }}
-              />
-            </View>
-
-            <View style={{ marginBottom: 14 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6, letterSpacing: 0.5 }}>
-                {language === 'en' ? 'VARIETY' : 'VARIEDAD'}
-              </Text>
-              <TextInput
-                value={variedadLote}
-                onChangeText={setVariedadLote}
-                placeholder={t('variedadPlaceholder')}
-                placeholderTextColor={theme.textMuted}
-                style={{
-                  backgroundColor: theme.inputBg,
-                  borderRadius: 12,
-                  paddingHorizontal: 14,
-                  paddingVertical: 12,
-                  fontSize: 14,
-                  color: theme.text,
-                  borderWidth: 1,
-                  borderColor: theme.inputBorder,
-                }}
-              />
-            </View>
-
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6, letterSpacing: 0.5 }}>
-                  {language === 'en' ? 'HECTARES' : 'HECTÁREAS'}
-                </Text>
-                <TextInput
-                  value={hectareasLote}
-                  onChangeText={setHectareasLote}
-                  placeholder="2.0"
-                  keyboardType="decimal-pad"
-                  placeholderTextColor={theme.textMuted}
-                  style={{
-                    backgroundColor: theme.inputBg,
-                    borderRadius: 12,
-                    paddingHorizontal: 14,
-                    paddingVertical: 12,
-                    fontSize: 14,
-                    color: theme.text,
-                    borderWidth: 1,
-                    borderColor: theme.inputBorder,
-                  }}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6, letterSpacing: 0.5 }}>
-                  {language === 'en' ? 'LOCATION' : 'UBICACIÓN'}
-                </Text>
-                <TextInput
-                  value={ubicacionLote}
-                  onChangeText={setUbicacionLote}
-                  placeholder={t('ubicacionPlaceholder')}
-                  placeholderTextColor={theme.textMuted}
-                  style={{
-                    backgroundColor: theme.inputBg,
-                    borderRadius: 12,
-                    paddingHorizontal: 14,
-                    paddingVertical: 12,
-                    fontSize: 14,
-                    color: theme.text,
-                    borderWidth: 1,
-                    borderColor: theme.inputBorder,
-                  }}
-                />
-              </View>
-            </View>
-
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TouchableOpacity
-                onPress={() => setModalNuevoLote(false)}
-                style={{
-                  flex: 1,
-                  paddingVertical: 14,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: theme.cardBorder,
-                  alignItems: 'center',
-                }}>
-                <Text style={{ color: theme.textSecondary, fontWeight: '700', fontSize: 14 }}>
-                  {t('cancelar')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleCrearPrimerLote}
-                style={{
-                  flex: 1,
-                  paddingVertical: 14,
-                  borderRadius: 14,
-                  backgroundColor: theme.primary,
-                  alignItems: 'center',
-                }}>
-                <Text style={{ color: 'white', fontWeight: '700', fontSize: 14 }}>
-                  {t('guardar')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+      {/* Nueva parcela */}
+      <Sheet
+        visible={modalNuevoLote}
+        onClose={() => setModalNuevoLote(false)}
+        title={t('nuevaParcela')}
+        subtitle={language === 'en' ? 'Basic details of your field' : 'Datos básicos de tu cultivo'}
+        icon="leaf-outline"
+        footer={
+          <>
+            <Button label={t('cancelar')} variant="secondary" onPress={() => setModalNuevoLote(false)} flex />
+            <Button label={t('guardar')} onPress={handleCrearPrimerLote} flex />
+          </>
+        }>
+        <Field
+          label={language === 'en' ? 'Name' : 'Nombre'}
+          required
+          value={nombreLote}
+          onChangeText={setNombreLote}
+          placeholder={t('nombreParcelaPlaceholder')}
+        />
+        <Field
+          label={language === 'en' ? 'Variety' : 'Variedad'}
+          value={variedadLote}
+          onChangeText={setVariedadLote}
+          placeholder={t('variedadPlaceholder')}
+        />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Field
+            style={{ flex: 1 }}
+            label={language === 'en' ? 'Hectares' : 'Hectáreas'}
+            required
+            value={hectareasLote}
+            onChangeText={setHectareasLote}
+            placeholder="2.0"
+            keyboardType="decimal-pad"
+          />
+          <Field
+            style={{ flex: 1 }}
+            label={language === 'en' ? 'Location' : 'Ubicación'}
+            value={ubicacionLote}
+            onChangeText={setUbicacionLote}
+            placeholder={t('ubicacionPlaceholder')}
+          />
         </View>
-      </Modal>
+      </Sheet>
 
-      {/* MODAL: Vincular Parcela (Técnico) */}
-      <Modal visible={modalVincular} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 28 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 12,
-                    backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : '#DBEAFE',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: 10,
-                  }}>
-                  <Ionicons name="key-outline" size={18} color={isDarkMode ? '#60A5FA' : '#2563EB'} />
-                </View>
-                <Text style={{ fontSize: 18, fontWeight: '800', color: theme.text }}>
-                  {language === 'en' ? 'Link Plot by Code' : 'Vincular parcela por código'}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => setModalVincular(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <Ionicons name="close" size={22} color={theme.textMuted} />
-              </TouchableOpacity>
-            </View>
-            <Text style={{ fontSize: 13, color: theme.textSecondary, marginBottom: 18, lineHeight: 18 }}>
-              {language === 'en'
-                ? 'Enter the 6-character access code provided by the potato farmer to monitor this specific plot.'
-                : 'Ingresa el código único de 6 caracteres proporcionado por el agricultor para auditar únicamente esta parcela.'}
-            </Text>
-            <TextInput
-              value={codigoInput}
-              onChangeText={setCodigoInput}
-              placeholder="A7B9X2"
-              autoCapitalize="characters"
-              maxLength={6}
-              placeholderTextColor={theme.textMuted}
-              style={{
-                backgroundColor: theme.inputBg,
-                borderRadius: 14,
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                fontSize: 24,
-                fontWeight: '800',
-                textAlign: 'center',
-                letterSpacing: 8,
-                color: isDarkMode ? '#60A5FA' : '#2563EB',
-                marginBottom: 20,
-                borderWidth: 1,
-                borderColor: theme.inputBorder,
-              }}
-            />
-            <TouchableOpacity
-              onPress={handleVincular}
-              style={{
-                backgroundColor: isDarkMode ? '#2563EB' : '#1D4ED8',
-                width: '100%',
-                paddingVertical: 14,
-                borderRadius: 14,
-                alignItems: 'center',
-              }}>
-              <Text style={{ color: 'white', fontWeight: '700', fontSize: 14 }}>
-                {language === 'en' ? 'Link Plot' : 'Vincular parcela'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {/* Vincular parcela (técnico) */}
+      <Sheet
+        visible={modalVincular}
+        onClose={() => setModalVincular(false)}
+        title={language === 'en' ? 'Link plot' : 'Vincular parcela'}
+        subtitle={language === 'en' ? 'Use the code shared by the farmer' : 'Usa el código que te compartió el agricultor'}
+        icon="key-outline"
+        footer={<Button label={language === 'en' ? 'Link plot' : 'Vincular parcela'} onPress={handleVincular} flex />}>
+        <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 16, lineHeight: 20 }}>
+          {language === 'en'
+            ? 'Enter the 6-character access code provided by the potato farmer to monitor this specific plot.'
+            : 'Ingresa el código único de 6 caracteres proporcionado por el agricultor para auditar únicamente esta parcela.'}
+        </Text>
+        <Field
+          value={codigoInput}
+          onChangeText={setCodigoInput}
+          placeholder="A7B9X2"
+          autoCapitalize="characters"
+          maxLength={6}
+          inputStyle={{ fontSize: 26, fontWeight: '800', textAlign: 'center', letterSpacing: 8, paddingVertical: 14, color: theme.primary }}
+        />
+      </Sheet>
     </SafeAreaView>
   );
 }
