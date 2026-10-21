@@ -129,21 +129,16 @@ export default function ResultadoScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
-      {/* Header */}
-      <View style={{ paddingHorizontal: 20, paddingVertical: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.cardBorder }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="chevron-back" size={20} color={theme.textMuted} />
-          <Text style={{ color: theme.textMuted, fontSize: 13, marginLeft: 4, fontWeight: '600' }}>
-            {language === 'en' ? 'Back' : 'Volver'}
+      {/* Encabezado */}
+      <View style={{ paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center' }}>
+        <IconButton icon="chevron-back" onPress={() => router.back()} accessibilityLabel={language === 'en' ? 'Back' : 'Volver'} />
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text style={{ fontSize: 17, fontWeight: '700', color: theme.text }}>{t('resultadoTitulo')}</Text>
+          <Text style={{ fontSize: 12, color: theme.textMuted }} numberOfLines={1}>
+            {finalCultivoNombre}
           </Text>
-        </TouchableOpacity>
-        <Text style={{ fontSize: 16, fontWeight: '800', color: theme.text }}>
-          {t('resultadoTitulo')}
-        </Text>
-        <View style={{ width: 50 }} />
+        </View>
+        <View style={{ width: 40 }} />
       </View>
 
       {/* Content */}
