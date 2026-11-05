@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Alert, Animated, Easing, RefreshControl } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, Image, Alert, RefreshControl } from 'react-native';
+import { PressableScale, Reveal } from '../../components/motion';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -56,16 +57,6 @@ export default function Inicio() {
 
   const [modalVincular, setModalVincular] = useState(false);
   const [codigoInput, setCodigoInput] = useState('');
-
-  // Entrada suave del contenido
-  const enter = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.timing(enter, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  }, []);
-  const enterStyle = {
-    opacity: enter,
-    transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
-  };
 
   const getSaludo = () => {
     const hora = new Date().getHours();
@@ -162,9 +153,8 @@ export default function Inicio() {
         </Text>
       </View>
 
-      <TouchableOpacity
+      <PressableScale
         onPress={() => router.push('/(tabs)/perfil')}
-        activeOpacity={0.75}
         accessibilityLabel={language === 'en' ? 'Open profile' : 'Abrir perfil'}
         style={{
           width: 40,
@@ -177,7 +167,7 @@ export default function Inicio() {
           justifyContent: 'center',
         }}>
         <Text style={{ fontSize: 15, fontWeight: '800', color: theme.primary }}>{nombre.charAt(0).toUpperCase()}</Text>
-      </TouchableOpacity>
+      </PressableScale>
     </View>
   );
 
@@ -191,18 +181,20 @@ export default function Inicio() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />}
         showsVerticalScrollIndicator={false}>
         {rolActivo === 'agricultor' ? (
-          <Animated.View style={enterStyle}>
+          <View>
             {/* Saludo */}
-            <Text style={{ fontSize: 15, color: theme.textMuted, fontWeight: '500' }}>{getSaludo()},</Text>
-            <Text style={{ fontSize: 30, fontWeight: '800', color: theme.text, letterSpacing: -0.8, marginBottom: 4 }}>
-              {nombre}
-            </Text>
-            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 20 }}>{t('subtituloInicio')}</Text>
+            <Reveal index={0}>
+              <Text style={{ fontSize: 15, color: theme.textMuted, fontWeight: '500' }}>{getSaludo()},</Text>
+              <Text style={{ fontSize: 30, fontWeight: '800', color: theme.text, letterSpacing: -0.8, marginBottom: 4 }}>
+                {nombre}
+              </Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 20 }}>{t('subtituloInicio')}</Text>
+            </Reveal>
 
             {/* Acción principal */}
-            <TouchableOpacity
+            <Reveal index={1}>
+            <PressableScale
               onPress={() => router.push('/camera')}
-              activeOpacity={0.9}
               accessibilityRole="button"
               style={{
                 backgroundColor: theme.bannerBg,
@@ -229,10 +221,12 @@ export default function Inicio() {
                   {language === 'en' ? 'Open camera' : 'Abrir cámara'}
                 </Text>
               </View>
-            </TouchableOpacity>
+            </PressableScale>
+            </Reveal>
 
             {/* Aviso de dictamen */}
             {casosRevisados.length > 0 && (
+              <Reveal index={2}>
               <Card onPress={() => router.push('/(tabs)/historial')} style={{ marginBottom: 16 }} padding={14}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <IconTile icon="checkmark-done" tone="success" size={40} />
@@ -247,30 +241,31 @@ export default function Inicio() {
                   <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
                 </View>
               </Card>
+              </Reveal>
             )}
 
             {/* Métricas */}
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 28 }}>
+            <Reveal index={3} style={{ flexDirection: 'row', gap: 10, marginBottom: 28 }}>
               <StatTile value={cultivos.length} label={t('metricasParcelas')} icon="map-outline" tone="primary" />
               <StatTile value={analisisHistorial.length} label={t('metricasEscaneos')} icon="scan-outline" tone="info" />
               <StatTile value={casosPendientes.length} label={t('metricasEnRevision')} icon="hourglass-outline" tone="warning" />
-            </View>
+            </Reveal>
 
             {/* Sin parcelas */}
             {cultivos.length === 0 && (
-              <View style={{ marginBottom: 28 }}>
+              <Reveal index={4} style={{ marginBottom: 28 }}>
                 <EmptyState
                   icon="map-outline"
                   title={t('sinParcelasTitulo')}
                   description={t('sinParcelasDesc')}
                   action={<Button label={t('agregarParcelaBtn')} icon="add" onPress={() => setModalNuevoLote(true)} />}
                 />
-              </View>
+              </Reveal>
             )}
 
             {/* Parcelas */}
             {cultivos.length > 0 && (
-              <View style={{ marginBottom: 28 }}>
+              <Reveal index={4} style={{ marginBottom: 28 }}>
                 <SectionTitle title={t('tusParcelas')} actionLabel={t('verTodas')} onAction={() => router.push('/(tabs)/cultivos')} />
                 <Card padding={0}>
                   {cultivos.slice(0, 3).map((cultivo, i) => {
@@ -278,12 +273,11 @@ export default function Inicio() {
                     return (
                       <View key={cultivo.id}>
                         {i > 0 && <Divider inset={68} />}
-                        <TouchableOpacity
+                        <PressableScale
                           onPress={() => {
                             setSelectedCultivoId(cultivo.id);
                             router.push({ pathname: '/camera', params: { cultivoId: cultivo.id } });
                           }}
-                          activeOpacity={0.7}
                           style={{ flexDirection: 'row', alignItems: 'center', padding: 14 }}>
                           <IconTile icon="leaf" tone={estado.tone} size={40} />
                           <View style={{ flex: 1, marginLeft: 14 }}>
@@ -298,25 +292,24 @@ export default function Inicio() {
                             <Ionicons name="camera-outline" size={14} color={theme.primary} />
                             <Text style={{ fontSize: 12, fontWeight: '700', color: theme.primary, marginLeft: 4 }}>{t('escanear')}</Text>
                           </View>
-                        </TouchableOpacity>
+                        </PressableScale>
                       </View>
                     );
                   })}
                 </Card>
-              </View>
+              </Reveal>
             )}
 
             {/* Análisis recientes */}
             {analisisHistorial.length > 0 && (
-              <View>
+              <Reveal index={5}>
                 <SectionTitle title={t('analisisRecientes')} actionLabel={t('verTodas')} onAction={() => router.push('/(tabs)/historial')} />
                 <Card padding={0}>
                   {analisisHistorial.slice(0, 3).map((item, i) => (
                     <View key={item.id}>
                       {i > 0 && <Divider inset={74} />}
-                      <TouchableOpacity
+                      <PressableScale
                         onPress={() => router.push('/(tabs)/historial')}
-                        activeOpacity={0.7}
                         style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
                         <Image
                           source={{ uri: item.imageUri || FALLBACK_IMG }}
@@ -336,22 +329,25 @@ export default function Inicio() {
                         {item.estadoRevision !== 'revisado' && item.estadoRevision !== 'pendiente' && (
                           <Badge label={item.estado === 'alerta' ? t('estadoAlerta') : t('estadoOptimo')} tone={item.estado === 'alerta' ? 'warning' : 'success'} dot />
                         )}
-                      </TouchableOpacity>
+                      </PressableScale>
                     </View>
                   ))}
                 </Card>
-              </View>
+              </Reveal>
             )}
-          </Animated.View>
+          </View>
         ) : (
           /* ===== MODO TÉCNICO ===== */
-          <Animated.View style={enterStyle}>
-            <Text style={{ fontSize: 15, color: theme.textMuted, fontWeight: '500' }}>{getSaludo()},</Text>
-            <Text style={{ fontSize: 30, fontWeight: '800', color: theme.text, letterSpacing: -0.8, marginBottom: 16 }}>
-              {nombre}
-            </Text>
+          <View>
+            <Reveal index={0}>
+              <Text style={{ fontSize: 15, color: theme.textMuted, fontWeight: '500' }}>{getSaludo()},</Text>
+              <Text style={{ fontSize: 30, fontWeight: '800', color: theme.text, letterSpacing: -0.8, marginBottom: 16 }}>
+                {nombre}
+              </Text>
+            </Reveal>
 
             {/* Credencial */}
+            <Reveal index={1}>
             <View
               style={{
                 backgroundColor: theme.bannerBg,
@@ -377,15 +373,17 @@ export default function Inicio() {
                 </View>
               </View>
             </View>
+            </Reveal>
 
             {/* Métricas */}
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 28 }}>
+            <Reveal index={2} style={{ flexDirection: 'row', gap: 10, marginBottom: 28 }}>
               <StatTile value={casosPendientes.length} label={language === 'en' ? 'To review' : 'Por revisar'} icon="hourglass-outline" tone="warning" />
               <StatTile value={casosRevisados.length} label={language === 'en' ? 'Audited' : 'Auditados'} icon="checkmark-done-outline" tone="primary" />
               <StatTile value={cultivos.length} label={t('metricasParcelas')} icon="map-outline" tone="info" />
-            </View>
+            </Reveal>
 
             {/* Casos pendientes */}
+            <Reveal index={3}>
             <SectionTitle
               title={language === 'en' ? 'Pending cases' : 'Casos pendientes'}
               actionLabel={casosPendientes.length > 0 ? t('verTodas') : undefined}
@@ -402,9 +400,8 @@ export default function Inicio() {
                 {casosPendientes.map((item, i) => (
                   <View key={item.id}>
                     {i > 0 && <Divider inset={74} />}
-                    <TouchableOpacity
+                    <PressableScale
                       onPress={() => router.push('/(tabs)/historial')}
-                      activeOpacity={0.7}
                       style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
                       <Image
                         source={{ uri: item.imageUri || FALLBACK_IMG }}
@@ -420,13 +417,14 @@ export default function Inicio() {
                         </Text>
                       </View>
                       <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
-                    </TouchableOpacity>
+                    </PressableScale>
                   </View>
                 ))}
               </Card>
             )}
+            </Reveal>
 
-            <View style={{ marginTop: 24, gap: 10 }}>
+            <Reveal index={4} style={{ marginTop: 24, gap: 10 }}>
               <Button label={language === 'en' ? 'View full history' : 'Ver historial completo'} icon="time-outline" onPress={() => router.push('/(tabs)/historial')} />
               <Button
                 label={language === 'en' ? 'Link plot by code' : 'Vincular parcela por código'}
@@ -434,8 +432,8 @@ export default function Inicio() {
                 variant="secondary"
                 onPress={() => setModalVincular(true)}
               />
-            </View>
-          </Animated.View>
+            </Reveal>
+          </View>
         )}
       </ScrollView>
 

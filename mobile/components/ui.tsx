@@ -7,7 +7,6 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   ActivityIndicator,
   Modal,
   Pressable,
@@ -18,6 +17,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { PressableScale } from './motion';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
@@ -127,9 +127,9 @@ export function Card({
   };
   if (onPress) {
     return (
-      <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={[base, style]}>
+      <PressableScale onPress={onPress} style={[base, style]}>
         {children}
-      </TouchableOpacity>
+      </PressableScale>
     );
   }
   return <View style={[base, style]}>{children}</View>;
@@ -182,10 +182,9 @@ export function Button({
   const isDisabled = disabled || loading;
 
   return (
-    <TouchableOpacity
+    <PressableScale
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.82}
       accessibilityRole="button"
       style={[
         {
@@ -214,7 +213,7 @@ export function Button({
           {iconRight ? <Ionicons name={iconRight} size={dims.icon} color={p.fg} style={{ marginLeft: 8 }} /> : null}
         </>
       )}
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -239,9 +238,8 @@ export function IconButton({
   const bg = filled ? theme.primary : tone === 'neutral' ? theme.glassBg : c.bg;
   const fg = filled ? theme.onPrimary : tone === 'neutral' ? theme.text : c.fg;
   return (
-    <TouchableOpacity
+    <PressableScale
       onPress={onPress}
-      activeOpacity={0.75}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
@@ -256,7 +254,7 @@ export function IconButton({
         justifyContent: 'center',
       }}>
       <Ionicons name={icon} size={size * 0.45} color={fg} />
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -324,9 +322,9 @@ export function SectionTitle({
     <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }, style]}>
       <Text style={{ fontSize: 17, fontWeight: '700', color: theme.text, letterSpacing: -0.2 }}>{title}</Text>
       {actionLabel && onAction ? (
-        <TouchableOpacity onPress={onAction} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <PressableScale onPress={onAction} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Text style={{ fontSize: 14, fontWeight: '600', color: theme.primary }}>{actionLabel}</Text>
-        </TouchableOpacity>
+        </PressableScale>
       ) : null}
     </View>
   );
@@ -441,9 +439,8 @@ export function Chip({
 }) {
   const { theme } = useApp();
   return (
-    <TouchableOpacity
+    <PressableScale
       onPress={onPress}
-      activeOpacity={0.8}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -462,7 +459,7 @@ export function Chip({
           {count}
         </Text>
       ) : null}
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -519,9 +516,9 @@ export function SettingsRow({
     </View>
   );
   return onPress ? (
-    <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
+    <PressableScale onPress={onPress} scaleTo={0.985}>
       {content}
-    </TouchableOpacity>
+    </PressableScale>
   ) : (
     content
   );

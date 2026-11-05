@@ -88,8 +88,9 @@ function ThemedStack() {
     <>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg } }}>
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        {/* Login y menú se cruzan con un fundido en lugar de un corte */}
+        <Stack.Screen name="auth" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade', animationDuration: 350 }} />
         <Stack.Screen name="camera" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="resultado" options={{ headerShown: false, animation: 'slide_from_right' }} />
       </Stack>

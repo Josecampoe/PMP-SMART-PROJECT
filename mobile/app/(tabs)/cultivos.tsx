@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Share, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Alert, ActivityIndicator, Share, RefreshControl } from 'react-native';
+import { PressableScale, Reveal } from '../../components/motion';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -258,15 +259,18 @@ export default function CultivosScreen() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40 }} showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />}>
         {/* Resumen */}
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
+        <Reveal index={0} style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
           <StatTile value={totalHectareas.toFixed(1)} label={language === 'en' ? 'Hectares' : 'Hectáreas'} icon="resize-outline" tone="neutral" />
           <StatTile value={cultivosEnAlerta} label={language === 'en' ? 'Alerts' : 'Alertas'} icon="warning-outline" tone="warning" />
           <StatTile value={cultivosOptimos} label={language === 'en' ? 'Healthy' : 'Sanas'} icon="checkmark-circle-outline" tone="primary" />
-        </View>
+        </Reveal>
 
-        <SectionTitle title={language === 'en' ? `Registered plots · ${cultivos.length}` : `Parcelas registradas · ${cultivos.length}`} />
+        <Reveal index={1}>
+          <SectionTitle title={language === 'en' ? `Registered plots · ${cultivos.length}` : `Parcelas registradas · ${cultivos.length}`} />
+        </Reveal>
 
         {cultivos.length === 0 ? (
+          <Reveal index={2}>
           <EmptyState
             icon={esTecnico ? 'shield-checkmark-outline' : 'leaf-outline'}
             title={esTecnico ? (language === 'en' ? 'No plots under surveillance' : 'Sin parcelas bajo vigilancia') : t('sinCultivos')}
@@ -287,14 +291,16 @@ export default function CultivosScreen() {
               )
             }
           />
+          </Reveal>
         ) : (
-          cultivos.map((cultivo) => {
+          cultivos.map((cultivo, index) => {
             const badge = getBadgeEstado(cultivo.estadoFitosanitario);
             const analisisDeEsteLote = analisisHistorial.filter(
               (a) => a.cultivoId === cultivo.id || a.cultivoNombre === cultivo.nombre
             );
             return (
-              <Card key={cultivo.id} style={{ marginBottom: 14 }} padding={0}>
+              <Reveal key={cultivo.id} index={index + 2}>
+              <Card style={{ marginBottom: 14 }} padding={0}>
                 {/* Encabezado de la tarjeta */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, paddingBottom: 12 }}>
                   <IconTile icon="leaf" tone={badge.tone} size={44} />
@@ -378,6 +384,7 @@ export default function CultivosScreen() {
                   )}
                 </View>
               </Card>
+              </Reveal>
             );
           })
         )}
@@ -443,7 +450,7 @@ export default function CultivosScreen() {
           onChangeText={setUbicacion}
           placeholder={t('ubicacionPlaceholder')}
           right={
-            <TouchableOpacity
+            <PressableScale
               onPress={obtenerUbicacionGPS}
               disabled={isLocating}
               style={{ flexDirection: 'row', alignItems: 'center' }}
@@ -458,7 +465,7 @@ export default function CultivosScreen() {
                   </Text>
                 </>
               )}
-            </TouchableOpacity>
+            </PressableScale>
           }
         />
       </Sheet>

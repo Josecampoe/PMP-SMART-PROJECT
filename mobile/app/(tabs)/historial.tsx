@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Alert, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Image, Alert, RefreshControl } from 'react-native';
+import { PressableScale, Reveal } from '../../components/motion';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -183,6 +184,7 @@ export default function Historial() {
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />}>
         {/* Buscador */}
+        <Reveal index={0}>
         <Field
           icon="search"
           value={busqueda}
@@ -192,8 +194,10 @@ export default function Historial() {
           style={{ marginBottom: 12 }}
           inputStyle={{ paddingVertical: 11 }}
         />
+        </Reveal>
 
         {/* Filtros */}
+        <Reveal index={1}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -203,9 +207,11 @@ export default function Historial() {
             <Chip key={f.id} label={f.label} icon={'icon' in f ? f.icon : undefined} count={'count' in f ? f.count : undefined} selected={filtro === f.id} onPress={() => setFiltro(f.id)} />
           ))}
         </ScrollView>
+        </Reveal>
 
         {/* Listado */}
         {itemsFiltrados.length === 0 ? (
+          <Reveal index={2}>
           <EmptyState
             icon="document-text-outline"
             title={busqueda.trim() || filtro !== 'todos' ? (language === 'en' ? 'No matching results' : 'Sin resultados') : t('sinAnalisis')}
@@ -222,11 +228,13 @@ export default function Historial() {
               ) : undefined
             }
           />
+          </Reveal>
         ) : (
-          itemsFiltrados.map((item) => {
+          itemsFiltrados.map((item, index) => {
             const esAlerta = item.estado === 'alerta' || Boolean(item.diagnostico?.includes('PMP'));
             return (
-              <Card key={item.id} onPress={() => setSelectedAnalisis(item)} padding={12} style={{ marginBottom: 10 }}>
+              <Reveal key={item.id} index={index + 2}>
+              <Card onPress={() => setSelectedAnalisis(item)} padding={12} style={{ marginBottom: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View>
                     <Image
@@ -265,6 +273,7 @@ export default function Historial() {
                   <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
                 </View>
               </Card>
+              </Reveal>
             );
           })
         )}
@@ -392,10 +401,9 @@ export default function Historial() {
           {OPCIONES_DIAGNOSTICO_TECNICO.map((opc) => {
             const sel = diagValidado === opc;
             return (
-              <TouchableOpacity
+              <PressableScale
                 key={opc}
                 onPress={() => setDiagValidado(opc)}
-                activeOpacity={0.8}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -408,7 +416,7 @@ export default function Historial() {
                 }}>
                 <Ionicons name={sel ? 'radio-button-on' : 'radio-button-off'} size={15} color={sel ? theme.primary : theme.textMuted} style={{ marginRight: 6 }} />
                 <Text style={{ fontSize: 13, fontWeight: '600', color: sel ? theme.primary : theme.textSecondary }}>{opc}</Text>
-              </TouchableOpacity>
+              </PressableScale>
             );
           })}
         </View>

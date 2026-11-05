@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, Switch } from 'react-native';
+import { View, Text, ScrollView, Alert, Switch } from 'react-native';
+import { PressableScale, Reveal } from '../../components/motion';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -201,6 +202,7 @@ export default function PerfilScreen() {
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* Tarjeta de usuario */}
+        <Reveal index={0}>
         <Card padding={0} style={{ marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}>
             <View
@@ -251,8 +253,10 @@ export default function PerfilScreen() {
             ))}
           </View>
         </Card>
+        </Reveal>
 
         {/* Apariencia */}
+        <Reveal index={1}>
         <GroupLabel>{t('seccionApariencia')}</GroupLabel>
         <Card padding={0} style={{ marginBottom: 24 }}>
           <SettingsRow
@@ -276,22 +280,23 @@ export default function PerfilScreen() {
             title={t('idioma')}
             desc={t('idiomaDesc')}
             right={
-              <View style={{ flexDirection: 'row', backgroundColor: theme.surfaceAlt, borderRadius: 10, padding: 3, borderWidth: 1, borderColor: theme.cardBorder }}>
+              <View style={{ flexDirection: 'row', backgroundColor: theme.surfaceAlt, borderRadius: 10, padding: 3, borderWidth: 1, borderColor: theme.glassBorder }}>
                 {(['es', 'en'] as const).map((lng) => (
-                  <TouchableOpacity
+                  <PressableScale
                     key={lng}
                     onPress={() => setLanguage(lng)}
-                    activeOpacity={0.8}
-                    style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: language === lng ? theme.card : 'transparent' }}>
+                    style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: language === lng ? theme.glassBg : 'transparent' }}>
                     <Text style={{ fontSize: 12, fontWeight: '700', color: language === lng ? theme.text : theme.textMuted }}>{lng.toUpperCase()}</Text>
-                  </TouchableOpacity>
+                  </PressableScale>
                 ))}
               </View>
             }
           />
         </Card>
+        </Reveal>
 
         {/* Guía PMP */}
+        <Reveal index={2}>
         <GroupLabel>{t('guiaPmpTitulo')}</GroupLabel>
         <Card padding={0} style={{ marginBottom: 24 }}>
           {guia.map((g, i) => {
@@ -315,8 +320,10 @@ export default function PerfilScreen() {
             );
           })}
         </Card>
+        </Reveal>
 
         {/* Datos */}
+        <Reveal index={3}>
         <GroupLabel>{language === 'en' ? 'Local data' : 'Datos locales'}</GroupLabel>
         <Card padding={0} style={{ marginBottom: 24 }}>
           <SettingsRow
@@ -335,10 +342,12 @@ export default function PerfilScreen() {
             onPress={handleLimpiarDatos}
           />
         </Card>
+        </Reveal>
 
-        <Button label={t('cerrarSesion')} icon="log-out-outline" variant="dangerSoft" onPress={handleCerrarSesion} />
-
-        <Text style={{ textAlign: 'center', fontSize: 12, color: theme.textMuted, marginTop: 20 }}>PMP Smart · v1.0.0</Text>
+        <Reveal index={4}>
+          <Button label={t('cerrarSesion')} icon="log-out-outline" variant="dangerSoft" onPress={handleCerrarSesion} />
+          <Text style={{ textAlign: 'center', fontSize: 12, color: theme.textMuted, marginTop: 20 }}>PMP Smart · v1.0.0</Text>
+        </Reveal>
       </ScrollView>
 
       {/* Editar agricultor */}
