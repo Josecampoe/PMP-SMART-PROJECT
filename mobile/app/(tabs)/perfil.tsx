@@ -192,7 +192,7 @@ export default function PerfilScreen() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }} edges={['top']}>
       <ScreenHeader
         title={language === 'en' ? 'Profile' : 'Perfil'}
         subtitle={t('perfilSubtitulo')}

@@ -3,6 +3,7 @@ import { View, Platform, type ColorValue } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../context/AppContext';
+import FieldBackgroundLite from '../../components/FieldBackgroundLite';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -27,12 +28,14 @@ export default function TabLayout() {
     );
 
   return (
-    <Tabs
+    <View style={{ flex: 1, backgroundColor: theme.sceneBase }}>
+      <FieldBackgroundLite />
+      <Tabs
       screenOptions={{
         tabBarActiveTintColor: theme.tabBarActive,
         tabBarInactiveTintColor: theme.tabBarInactive,
         headerShown: false,
-        sceneStyle: { backgroundColor: theme.bg },
+        sceneStyle: { backgroundColor: 'transparent' },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
@@ -60,5 +63,6 @@ export default function TabLayout() {
       <Tabs.Screen name="historial" options={{ title: t('tabHistorial'), tabBarIcon: icon('time', 'time-outline') }} />
       <Tabs.Screen name="perfil" options={{ title: t('tabPerfil'), tabBarIcon: icon('person', 'person-outline') }} />
     </Tabs>
+    </View>
   );
 }

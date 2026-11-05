@@ -86,7 +86,7 @@ export default function RegisterScreen() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0A1410' }}>
+    <View style={{ flex: 1, backgroundColor: AUTH.bg }}>
       <StatusBar style="light" />
       <FieldBackground />
 
@@ -142,7 +142,7 @@ export default function RegisterScreen() {
                           borderRadius: 16,
                           borderWidth: 1.5,
                           borderColor: selected ? AUTH.lime : AUTH.fieldBorder,
-                          backgroundColor: selected ? 'rgba(165, 207, 95, 0.10)' : AUTH.fieldBg,
+                          backgroundColor: selected ? AUTH.limeSoft : AUTH.fieldBg,
                         }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                           <FontAwesome name={item.icon} size={18} color={selected ? AUTH.lime : AUTH.textFaint} />

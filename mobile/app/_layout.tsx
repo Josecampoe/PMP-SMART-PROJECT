@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { FontAwesome } from '@expo/vector-icons';
 import { AppProvider, useApp } from '../context/AppContext';
 import { getAccessToken, authApi, authEvents } from '../lib/api';
+import { fieldTheme } from '../lib/theme';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -62,18 +63,18 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       <View
         style={{
           flex: 1,
-          backgroundColor: '#0A1410',
+          backgroundColor: fieldTheme.bg,
           alignItems: 'center',
           justifyContent: 'center',
         }}>
         <StatusBar style="light" />
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-          <FontAwesome name="leaf" size={20} color="#A5CF5F" />
-          <Text style={{ color: '#F3F1E7', fontSize: 20, fontWeight: '800', marginLeft: 8 }}>
-            PMP <Text style={{ color: '#A5CF5F' }}>Smart</Text>
+          <FontAwesome name="leaf" size={20} color={fieldTheme.primary} />
+          <Text style={{ color: fieldTheme.text, fontSize: 20, fontWeight: '800', marginLeft: 8 }}>
+            PMP <Text style={{ color: fieldTheme.primary }}>Smart</Text>
           </Text>
         </View>
-        <ActivityIndicator size="small" color="#A5CF5F" />
+        <ActivityIndicator size="small" color={fieldTheme.primary} />
       </View>
     );
   }

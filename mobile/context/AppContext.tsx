@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   perfilApi,
@@ -116,7 +115,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const [currentImageB64, setCurrentImageB64] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [language, setLanguageState] = useState<Language>('es');
 
   const setLanguage = (lang: Language) => {
@@ -160,8 +159,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (storedTheme === 'dark' || storedTheme === 'light') {
           setIsDarkMode(storedTheme === 'dark');
         } else {
-          // Sin preferencia guardada: usar el tema del sistema
-          setIsDarkMode(Appearance.getColorScheme() === 'dark');
+          // Sin preferencia guardada: tema oscuro "campo", igual que el login
+          setIsDarkMode(true);
         }
         if (storedLang === 'es' || storedLang === 'en') setLanguageState(storedLang);
       })

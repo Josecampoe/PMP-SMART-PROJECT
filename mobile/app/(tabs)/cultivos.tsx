@@ -242,7 +242,7 @@ export default function CultivosScreen() {
   const esTecnico = rolActivo === 'tecnico';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }} edges={['top']}>
       <ScreenHeader
         title={esTecnico ? (language === 'en' ? 'Surveillance' : 'Vigilancia') : (language === 'en' ? 'My plots' : 'Mis parcelas')}
         subtitle={t('cultivosSubtitulo')}

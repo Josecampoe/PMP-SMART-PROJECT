@@ -4,20 +4,27 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, type TextInputProps } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { fieldTheme } from '../lib/theme';
 
+/** Alias legibles de la paleta "campo" (lib/theme.ts) para login y registro */
 export const AUTH = {
-  text: '#F3F1E7',
-  textSoft: 'rgba(243, 241, 231, 0.68)',
-  textFaint: 'rgba(243, 241, 231, 0.4)',
-  placeholder: 'rgba(243, 241, 231, 0.28)',
-  lime: '#A5CF5F',
-  limeText: '#12230F',
-  wheat: '#E2B866',
-  fieldBg: 'rgba(255, 255, 255, 0.05)',
-  fieldBgFocus: 'rgba(255, 255, 255, 0.09)',
-  fieldBorder: 'rgba(255, 255, 255, 0.10)',
-  panel: 'rgba(8, 18, 12, 0.72)',
-  panelBorder: 'rgba(255, 255, 255, 0.07)',
+  bg: fieldTheme.bg,
+  text: fieldTheme.text,
+  textSoft: fieldTheme.textSecondary,
+  textFaint: fieldTheme.textMuted,
+  placeholder: fieldTheme.placeholder,
+  lime: fieldTheme.primary,
+  limeText: fieldTheme.onPrimary,
+  limeSoft: fieldTheme.primaryLight,
+  wheat: fieldTheme.highlight,
+  fieldBg: fieldTheme.inputBg,
+  fieldBgFocus: fieldTheme.inputBgFocus,
+  fieldBorder: fieldTheme.inputBorder,
+  panel: fieldTheme.glassBg,
+  panelBorder: fieldTheme.glassBorder,
+  danger: fieldTheme.danger,
+  dangerBg: fieldTheme.dangerBg,
+  dangerBorder: fieldTheme.dangerBorder,
 };
 
 export function AuthBrand() {

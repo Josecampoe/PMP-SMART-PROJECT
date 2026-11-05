@@ -165,7 +165,7 @@ export default function Historial() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }} edges={['top']}>
       <ScreenHeader
         title={t('historialTitulo')}
         subtitle={t('historialSubtitulo')}

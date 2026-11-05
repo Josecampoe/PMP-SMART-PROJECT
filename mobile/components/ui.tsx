@@ -82,7 +82,6 @@ export function ScreenHeader({
         flexDirection: 'row',
         alignItems: 'flex-end',
         justifyContent: 'space-between',
-        backgroundColor: theme.bg,
       }}>
       <View style={{ flex: 1, marginRight: 12 }}>
         {eyebrow ? (
@@ -117,14 +116,14 @@ export function Card({
   padding?: number;
 }) {
   const { theme } = useApp();
-  const elevation = useElevation(1);
+  // Vidrio: fondo semitransparente y borde de 1px, sin sombra (en Android
+  // la sombra se vería a través del fondo translúcido)
   const base: ViewStyle = {
-    backgroundColor: theme.card,
-    borderRadius: radius.lg,
+    backgroundColor: theme.glassBg,
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: theme.cardBorder,
+    borderColor: theme.glassBorder,
     padding,
-    ...elevation,
   };
   if (onPress) {
     return (
@@ -168,10 +167,10 @@ export function Button({
 
   const palette: Record<ButtonVariant, { bg: string; fg: string; border: string }> = {
     primary: { bg: theme.primary, fg: theme.onPrimary, border: theme.primary },
-    secondary: { bg: theme.card, fg: theme.text, border: theme.cardBorder },
+    secondary: { bg: theme.glassBg, fg: theme.text, border: theme.glassBorder },
     soft: { bg: theme.primaryLight, fg: theme.primary, border: 'transparent' },
     ghost: { bg: 'transparent', fg: theme.textSecondary, border: 'transparent' },
-    danger: { bg: theme.danger, fg: '#FFFFFF', border: theme.danger },
+    danger: { bg: theme.danger, fg: theme.onDanger, border: theme.danger },
     dangerSoft: { bg: theme.dangerBg, fg: theme.danger, border: 'transparent' },
   };
   const p = palette[variant];
@@ -237,7 +236,7 @@ export function IconButton({
 }) {
   const { theme } = useApp();
   const c = toneColors(theme, tone);
-  const bg = filled ? theme.primary : tone === 'neutral' ? theme.card : c.bg;
+  const bg = filled ? theme.primary : tone === 'neutral' ? theme.glassBg : c.bg;
   const fg = filled ? theme.onPrimary : tone === 'neutral' ? theme.text : c.fg;
   return (
     <TouchableOpacity
@@ -252,7 +251,7 @@ export function IconButton({
         borderRadius: size / 2,
         backgroundColor: bg,
         borderWidth: tone === 'neutral' && !filled ? 1 : 0,
-        borderColor: theme.cardBorder,
+        borderColor: theme.glassBorder,
         alignItems: 'center',
         justifyContent: 'center',
       }}>
@@ -381,7 +380,7 @@ export function Field({
         style={{
           flexDirection: 'row',
           alignItems: inputProps.multiline ? 'flex-start' : 'center',
-          backgroundColor: theme.inputBg,
+          backgroundColor: focused ? theme.inputBgFocus : theme.inputBg,
           borderWidth: 1,
           borderColor: focused ? theme.primary : theme.inputBorder,
           borderRadius: radius.md,
@@ -396,7 +395,7 @@ export function Field({
           />
         ) : null}
         <TextInput
-          placeholderTextColor={theme.textMuted}
+          placeholderTextColor={theme.placeholder}
           {...inputProps}
           onFocus={(e) => {
             setFocused(true);
@@ -451,9 +450,9 @@ export function Chip({
         paddingHorizontal: 14,
         paddingVertical: 8,
         borderRadius: 999,
-        backgroundColor: selected ? theme.text : theme.card,
+        backgroundColor: selected ? theme.text : theme.glassBg,
         borderWidth: 1,
-        borderColor: selected ? theme.text : theme.cardBorder,
+        borderColor: selected ? theme.text : theme.glassBorder,
         marginRight: 8,
       }}>
       {icon ? <Ionicons name={icon} size={14} color={selected ? theme.bg : theme.textSecondary} style={{ marginRight: 6 }} /> : null}
@@ -591,9 +590,12 @@ export function Sheet({
           <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Cerrar" />
           <View
             style={{
-              backgroundColor: theme.card,
+              backgroundColor: theme.glassStrong,
               borderTopLeftRadius: radius.xl,
               borderTopRightRadius: radius.xl,
+              borderWidth: 1,
+              borderBottomWidth: 0,
+              borderColor: theme.glassBorder,
               maxHeight: '92%',
               paddingBottom: Math.max(insets.bottom, 16),
             }}>

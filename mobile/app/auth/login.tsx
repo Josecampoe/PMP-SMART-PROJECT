@@ -60,7 +60,7 @@ export default function LoginScreen() {
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0A1410' }}>
+    <View style={{ flex: 1, backgroundColor: AUTH.bg }}>
       <StatusBar style="light" />
       <FieldBackground />
 

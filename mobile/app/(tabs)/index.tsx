@@ -182,7 +182,7 @@ export default function Inicio() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }} edges={['top']}>
       {Header}
 
       <ScrollView
