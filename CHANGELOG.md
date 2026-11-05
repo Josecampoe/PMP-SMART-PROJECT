@@ -1,6 +1,6 @@
 # Registro de cambios
 
-## Sin publicar
+## 1.2.0
 
 ### Interfaz
 - El menú usa el mismo mundo nocturno del login: fondo animado ligero detrás de las 4 pestañas.
