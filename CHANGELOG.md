@@ -1,5 +1,17 @@
 # Registro de cambios
 
+## Sin publicar
+
+### Interfaz
+- El menú usa el mismo mundo nocturno del login: fondo animado ligero detrás de las 4 pestañas.
+- Tarjetas, métricas y hojas tipo vidrio; paleta del login unificada en `lib/theme.ts`.
+- Barra de pestañas de vidrio con indicador que se desliza.
+- Entrada escalonada en cada pestaña, botones que se encogen al presionarlos y fundido del login al menú.
+- Contadores animados en Inicio, bloques de carga en Inicio, Cultivos e Historial y entrada animada en Resultado.
+- Marcador local con ícono de hoja en lugar de fotos de internet cuando no hay imagen.
+- Los errores de login y registro aparecen dentro del formulario.
+- La app arranca en tema oscuro si el usuario no eligió uno.
+
 ## 1.1.0
 
 ### Interfaz
