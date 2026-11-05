@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,7 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { authApi } from '../../lib/api';
 import FieldBackground from '../../components/FieldBackground';
-import { AUTH, AuthBrand, AuthButton, AuthField } from '../../components/AuthUI';
+import { AUTH, AuthBrand, AuthButton, AuthError, AuthField } from '../../components/AuthUI';
+import { useApp } from '../../context/AppContext';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -23,6 +23,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { t } = useApp();
 
   // Entrada escalonada: encabezado y luego el formulario
   const headIn = useRef(new Animated.Value(0)).current;
@@ -38,16 +40,17 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Campos requeridos', 'Ingresa tu correo y contraseña.');
+      setError(t('authErrCamposLogin'));
       return;
     }
 
+    setError(null);
     setIsLoading(true);
     const result = await authApi.login(email.trim(), password);
     setIsLoading(false);
 
     if (!result.success) {
-      Alert.alert('Error de Acceso', result.error || 'No se pudo iniciar sesión.');
+      setError(result.error || t('authErrLogin'));
       return;
     }
 
@@ -92,7 +95,10 @@ export default function LoginScreen() {
                 label="Correo electrónico"
                 icon="envelope-o"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(v) => {
+                  setEmail(v);
+                  if (error) setError(null);
+                }}
                 placeholder="nombre@finca.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -102,12 +108,16 @@ export default function LoginScreen() {
                 label="Contraseña"
                 icon="lock"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(v) => {
+                  setPassword(v);
+                  if (error) setError(null);
+                }}
                 placeholder="Tu contraseña"
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 secureToggle={{ visible: showPassword, onToggle: () => setShowPassword(!showPassword) }}
               />
+              <AuthError message={error} />
               <AuthButton label="Entrar" onPress={handleLogin} loading={isLoading} />
             </Animated.View>
 

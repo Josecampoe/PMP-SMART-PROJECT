@@ -1,11 +1,31 @@
-import { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator, Animated } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { analisisApi } from '../lib/api';
 import { Button, Card, IconButton, IconTile } from '../components/ui';
+import { Reveal, useReduceMotion } from '../components/motion';
+import LeafImage from '../components/LeafImage';
+import { cameraColors, type ThemeColors } from '../lib/theme';
+
+/** Barra de coincidencia que se llena de izquierda a derecha */
+function ConfidenceBar({ value, color, theme }: { value: number; color: string; theme: ThemeColors }) {
+  const reduce = useReduceMotion();
+  const target = Math.max(0, Math.min(100, value)) / 100;
+  const p = useSharedValue(reduce ? target : 0);
+  useEffect(() => {
+    p.value = reduce ? target : withDelay(250, withTiming(target, { duration: 800, easing: Easing.out(Easing.cubic) }));
+  }, [target, reduce]);
+  const fill = useAnimatedStyle(() => ({ transform: [{ scaleX: p.value }] }));
+  return (
+    <View style={{ height: 6, borderRadius: 3, backgroundColor: theme.glassBg, overflow: 'hidden' }}>
+      <Animated.View style={[{ width: '100%', height: '100%', borderRadius: 3, backgroundColor: color, transformOrigin: 'left' }, fill]} />
+    </View>
+  );
+}
 
 export default function ResultadoScreen() {
   const router = useRouter();
@@ -18,9 +38,10 @@ export default function ResultadoScreen() {
   const insets = useSafeAreaInsets();
   const [isSaving, setIsSaving] = useState(false);
 
-  const displayImageUri = currentImageB64
-    ? `data:image/jpeg;base64,${currentImageB64}`
-    : 'https://images.unsplash.com/photo-1555431189-0ab279e2be3a';
+  // La imagen de respaldo se mantiene solo para el envío a la IA (sin cambios de lógica);
+  // en pantalla se muestra un marcador local si no hay foto
+  const capturedImageUri = currentImageB64 ? `data:image/jpeg;base64,${currentImageB64}` : null;
+  const displayImageUri = capturedImageUri ?? 'https://images.unsplash.com/photo-1555431189-0ab279e2be3a';
 
   const targetCultivo =
     cultivos.find((c) => c.id === cultivoId) ||
@@ -32,18 +53,6 @@ export default function ResultadoScreen() {
   const [isProcessing, setIsProcessing] = useState(true);
   const [aiData, setAiData] = useState<any>(null);
   const [apiError, setApiError] = useState<string | null>(null);
-
-  // Animations
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-  const resultFade = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
-    ]).start();
-  }, []);
 
   useEffect(() => {
     const procesarIA = async () => {
@@ -58,7 +67,6 @@ export default function ResultadoScreen() {
         setApiError(language === 'en' ? 'AI connection issue.' : 'Problema de conexión con la IA.');
       } finally {
         setIsProcessing(false);
-        Animated.timing(resultFade, { toValue: 1, duration: 500, useNativeDriver: true }).start();
       }
     };
     procesarIA();
@@ -143,9 +151,9 @@ export default function ResultadoScreen() {
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
         {/* Foto */}
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+        <Reveal index={0}>
           <View style={{ height: 230, borderRadius: 22, overflow: 'hidden', marginBottom: 16, backgroundColor: theme.surfaceAlt }}>
-            <Image source={{ uri: displayImageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            <LeafImage uri={capturedImageUri} style={{ width: '100%', height: '100%' }} iconSize={56} />
             {!isProcessing && !apiError && (
               <View
                 style={{
@@ -154,28 +162,31 @@ export default function ResultadoScreen() {
                   bottom: 12,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: 'rgba(0,0,0,0.6)',
+                  backgroundColor: cameraColors.scrim,
                   paddingHorizontal: 10,
                   paddingVertical: 6,
                   borderRadius: 999,
                 }}>
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: isAlerta ? '#F0B64A' : '#6DBF71', marginRight: 6 }} />
-                <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: '600' }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: isAlerta ? cameraColors.flashActive : cameraColors.reticle, marginRight: 6 }} />
+                <Text style={{ fontSize: 12, color: cameraColors.text, fontWeight: '600' }}>
                   {confianzaNum}% {language === 'en' ? 'match' : 'coincidencia'}
                 </Text>
               </View>
             )}
           </View>
-        </Animated.View>
+        </Reveal>
 
-        <Animated.View style={{ opacity: isProcessing ? fadeAnim : resultFade }}>
+        <View>
           {isProcessing ? (
+            <Reveal index={1}>
             <Card padding={28} style={{ alignItems: 'center' }}>
               <ActivityIndicator size="large" color={theme.primary} />
               <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginTop: 16, textAlign: 'center' }}>{t('analizando')}</Text>
               <Text style={{ fontSize: 14, color: theme.textMuted, marginTop: 4, textAlign: 'center', lineHeight: 20 }}>{t('analizandoDesc')}</Text>
             </Card>
+            </Reveal>
           ) : apiError ? (
+            <Reveal index={0}>
             <View style={{ backgroundColor: theme.dangerBg, borderRadius: 18, padding: 22, alignItems: 'center', borderWidth: 1, borderColor: theme.dangerBorder }}>
               <IconTile icon="cloud-offline-outline" tone="danger" size={48} />
               <Text style={{ fontSize: 16, fontWeight: '800', color: theme.danger, marginTop: 12, marginBottom: 4 }}>
@@ -183,9 +194,11 @@ export default function ResultadoScreen() {
               </Text>
               <Text style={{ fontSize: 14, color: theme.textSecondary, textAlign: 'center', lineHeight: 20 }}>{apiError}</Text>
             </View>
+            </Reveal>
           ) : (
             <>
-              {/* Diagnóstico */}
+              {/* Diagnóstico: aparece primero, luego síntomas y recomendaciones */}
+              <Reveal index={0}>
               <View
                 style={{
                   backgroundColor: isAlerta ? theme.warningBg : theme.primaryLight,
@@ -205,7 +218,7 @@ export default function ResultadoScreen() {
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                    <Ionicons name={isAlerta ? 'alert' : 'checkmark'} size={26} color={isAlerta ? '#1F1400' : theme.onPrimary} />
+                    <Ionicons name={isAlerta ? 'alert' : 'checkmark'} size={26} color={isAlerta ? theme.onWarning : theme.onPrimary} />
                   </View>
                   <View style={{ flex: 1, marginLeft: 14 }}>
                     <Text style={{ fontSize: 13, fontWeight: '600', color: isAlerta ? theme.warning : theme.primary }}>
@@ -221,9 +234,7 @@ export default function ResultadoScreen() {
                     <Text style={{ fontSize: 13, color: theme.textSecondary }}>{language === 'en' ? 'Confidence' : 'Coincidencia'}</Text>
                     <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>{confianzaNum}%</Text>
                   </View>
-                  <View style={{ height: 6, borderRadius: 3, backgroundColor: theme.card, overflow: 'hidden' }}>
-                    <View style={{ width: `${Math.max(0, Math.min(100, confianzaNum))}%`, height: '100%', borderRadius: 3, backgroundColor: isAlerta ? theme.warning : theme.primary }} />
-                  </View>
+                  <ConfidenceBar value={confianzaNum} color={isAlerta ? theme.warning : theme.primary} theme={theme} />
                 </View>
 
                 <Text style={{ fontSize: 14, color: theme.textSecondary, lineHeight: 20, marginTop: 14 }}>
@@ -236,8 +247,10 @@ export default function ResultadoScreen() {
                     : 'No se detectaron patrones de Punta Morada. Mantén el monitoreo periódico.'}
                 </Text>
               </View>
+              </Reveal>
 
               {/* Síntomas */}
+              <Reveal index={1}>
               <Card style={{ marginBottom: 14 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                   <IconTile icon="eye-outline" tone={isAlerta ? 'warning' : 'success'} size={32} />
@@ -250,8 +263,10 @@ export default function ResultadoScreen() {
                   </View>
                 ))}
               </Card>
+              </Reveal>
 
               {/* Recomendaciones */}
+              <Reveal index={2}>
               <Card>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                   <IconTile icon="clipboard-outline" tone="info" size={32} />
@@ -266,20 +281,21 @@ export default function ResultadoScreen() {
                   </View>
                 ))}
               </Card>
+              </Reveal>
             </>
           )}
-        </Animated.View>
+        </View>
       </ScrollView>
 
       {/* Acciones */}
       <View
         style={{
-          backgroundColor: theme.card,
+          backgroundColor: theme.glassStrong,
           paddingHorizontal: 20,
           paddingTop: 12,
           paddingBottom: Math.max(insets.bottom, 14),
           borderTopWidth: 1,
-          borderTopColor: theme.cardBorder,
+          borderTopColor: theme.glassBorder,
           gap: 10,
         }}>
         <Button

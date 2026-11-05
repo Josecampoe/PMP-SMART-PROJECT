@@ -15,9 +15,10 @@ import {
   Platform,
   type TextInputProps,
   type StyleProp,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { PressableScale } from './motion';
+import { PressableScale, useCountUp } from './motion';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
@@ -466,9 +467,30 @@ export function Chip({
 // ---------------------------------------------------------------------------
 // Métrica
 // ---------------------------------------------------------------------------
-export function StatTile({ value, label, tone = 'neutral', icon }: { value: string | number; label: string; tone?: Tone; icon?: IconName }) {
+/** Número que cuenta desde 0; respeta los decimales del valor original */
+function CountUpText({ value, style }: { value: number; style: TextStyle }) {
+  const shown = useCountUp(value);
+  const decimals = Number.isInteger(value) ? 0 : 1;
+  return <Text style={style}>{shown.toFixed(decimals)}</Text>;
+}
+
+export function StatTile({
+  value,
+  label,
+  tone = 'neutral',
+  icon,
+  animate,
+}: {
+  value: string | number;
+  label: string;
+  tone?: Tone;
+  icon?: IconName;
+  /** Cuenta de 0 al valor cuando `value` es numérico */
+  animate?: boolean;
+}) {
   const { theme } = useApp();
   const c = toneColors(theme, tone);
+  const valueStyle: TextStyle = { fontSize: 24, fontWeight: '800', color: tone === 'neutral' ? theme.text : c.fg, letterSpacing: -0.5 };
   return (
     <Card style={{ flex: 1 }} padding={14}>
       {icon ? (
@@ -476,7 +498,7 @@ export function StatTile({ value, label, tone = 'neutral', icon }: { value: stri
           <IconTile icon={icon} tone={tone} size={30} />
         </View>
       ) : null}
-      <Text style={{ fontSize: 24, fontWeight: '800', color: tone === 'neutral' ? theme.text : c.fg, letterSpacing: -0.5 }}>{value}</Text>
+      {animate && typeof value === 'number' ? <CountUpText value={value} style={valueStyle} /> : <Text style={valueStyle}>{value}</Text>}
       <Text style={{ fontSize: 12, fontWeight: '500', color: theme.textMuted, marginTop: 2 }} numberOfLines={1}>
         {label}
       </Text>

@@ -2,7 +2,7 @@
  * Piezas de movimiento compartidas. Todo anima solo transform y opacity
  * en el hilo de UI (Reanimated) y respeta "reducir movimiento".
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
@@ -66,6 +66,47 @@ export function Reveal({
   }));
 
   return <Animated.View style={[style, animated]}>{children}</Animated.View>;
+}
+
+// ---------------------------------------------------------------------------
+// Número que cuenta de 0 al valor
+// ---------------------------------------------------------------------------
+/**
+ * Devuelve un número que sube desde el valor anterior (0 al inicio) hasta
+ * `target`. Solo cambia el texto; con "reducir movimiento" salta directo.
+ */
+export function useCountUp(target: number, duration = 700): number {
+  const reduce = useReduceMotion();
+  const [display, setDisplay] = useState(reduce ? target : 0);
+  const fromRef = useRef(0);
+
+  useEffect(() => {
+    if (reduce) {
+      fromRef.current = target;
+      setDisplay(target);
+      return;
+    }
+    const from = fromRef.current;
+    const start = Date.now();
+    let frame = 0;
+    const tick = () => {
+      const t = Math.min(1, (Date.now() - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(from + (target - from) * eased);
+      if (t < 1) {
+        frame = requestAnimationFrame(tick);
+      } else {
+        fromRef.current = target;
+      }
+    };
+    frame = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(frame);
+      fromRef.current = target;
+    };
+  }, [target, reduce]);
+
+  return display;
 }
 
 // ---------------------------------------------------------------------------

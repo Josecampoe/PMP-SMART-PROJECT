@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, type TextInputProps } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { fieldTheme } from '../lib/theme';
 
 /** Alias legibles de la paleta "campo" (lib/theme.ts) para login y registro */
@@ -117,5 +118,32 @@ export function AuthButton({ label, onPress, loading }: { label: string; onPress
         </>
       )}
     </TouchableOpacity>
+  );
+}
+
+/** Mensaje de error dentro del formulario, con fade de entrada */
+export function AuthError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <Animated.View
+      entering={FadeIn.duration(220)}
+      exiting={FadeOut.duration(160)}
+      accessibilityRole="alert"
+      accessibilityLiveRegion="polite"
+      style={{
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: AUTH.dangerBg,
+        borderWidth: 1,
+        borderColor: AUTH.dangerBorder,
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        marginTop: 2,
+        marginBottom: 4,
+      }}>
+      <FontAwesome name="exclamation-circle" size={15} color={AUTH.danger} style={{ marginTop: 1 }} />
+      <Text style={{ color: AUTH.danger, fontSize: 13, fontWeight: '600', marginLeft: 8, flex: 1, lineHeight: 18 }}>{message}</Text>
+    </Animated.View>
   );
 }

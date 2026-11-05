@@ -9,6 +9,7 @@ import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-ca
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useApp } from '../context/AppContext';
+import { cameraColors as CAM } from '../lib/theme';
 import { Button, Field, IconButton, IconTile, Sheet } from '../components/ui';
 
 export default function CameraScreen() {
@@ -154,14 +155,14 @@ export default function CameraScreen() {
   };
 
   const flashIcon = flash === 'on' ? 'flash' : flash === 'auto' ? 'flash-outline' : 'flash-off-outline';
-  const RETICLE = '#A5CF5F';
+  const RETICLE = CAM.reticle;
 
   if (!permission) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: CAM.bg, alignItems: 'center', justifyContent: 'center' }}>
         <StatusBar style="light" />
         <ActivityIndicator size="large" color={RETICLE} />
-        <Text style={{ color: '#FFFFFF', fontSize: 14, marginTop: 12 }}>
+        <Text style={{ color: CAM.text, fontSize: 14, marginTop: 12 }}>
           {language === 'en' ? 'Starting camera...' : 'Iniciando cámara...'}
         </Text>
       </View>
@@ -202,11 +203,11 @@ export default function CameraScreen() {
     );
   }
 
-  const glass = { backgroundColor: 'rgba(0,0,0,0.45)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' };
+  const glass = { backgroundColor: CAM.glass, borderWidth: 1, borderColor: CAM.glassBorder };
   const corner = { position: 'absolute' as const, width: 28, height: 28, borderColor: RETICLE };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#000' }}>
+    <View style={{ flex: 1, backgroundColor: CAM.bg }}>
       <StatusBar style="light" />
       {isFocused && (
         <CameraView
@@ -219,9 +220,9 @@ export default function CameraScreen() {
       )}
 
       {isCapturing && (
-        <View style={[StyleSheet.absoluteFill, { zIndex: 50, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }]}>
+        <View style={[StyleSheet.absoluteFill, { zIndex: 50, backgroundColor: CAM.scrim, alignItems: 'center', justifyContent: 'center' }]}>
           <ActivityIndicator size="large" color={RETICLE} />
-          <Text style={{ color: '#FFFFFF', marginTop: 14, fontWeight: '700', fontSize: 15 }}>
+          <Text style={{ color: CAM.text, marginTop: 14, fontWeight: '700', fontSize: 15 }}>
             {language === 'en' ? 'Processing image...' : 'Procesando imagen...'}
           </Text>
         </View>
@@ -234,10 +235,10 @@ export default function CameraScreen() {
             onPress={() => router.back()}
             accessibilityLabel={language === 'en' ? 'Back' : 'Volver'}
             style={[glass, { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' }]}>
-            <Ionicons name="close" size={22} color="#FFFFFF" />
+            <Ionicons name="close" size={22} color={CAM.text} />
           </TouchableOpacity>
 
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>{t('camaraTitulo')}</Text>
+          <Text style={{ color: CAM.text, fontSize: 16, fontWeight: '700' }}>{t('camaraTitulo')}</Text>
 
           <TouchableOpacity
             onPress={toggleFlash}
@@ -245,11 +246,11 @@ export default function CameraScreen() {
             style={[
               glass,
               { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
-              flash !== 'off' ? { backgroundColor: '#F0B64A', borderColor: '#F0B64A' } : null,
+              flash !== 'off' ? { backgroundColor: CAM.flashActive, borderColor: CAM.flashActive } : null,
             ]}>
-            <Ionicons name={flashIcon} size={19} color={flash !== 'off' ? '#1F1400' : '#FFFFFF'} />
+            <Ionicons name={flashIcon} size={19} color={flash !== 'off' ? CAM.onFlashActive : CAM.text} />
             {flash === 'auto' && (
-              <Text style={{ position: 'absolute', bottom: 4, right: 7, fontSize: 8, fontWeight: '900', color: '#1F1400' }}>A</Text>
+              <Text style={{ position: 'absolute', bottom: 4, right: 7, fontSize: 8, fontWeight: '900', color: CAM.onFlashActive }}>A</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -263,8 +264,8 @@ export default function CameraScreen() {
             <View style={[corner, { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 18 }]} />
           </View>
           <View style={[glass, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, marginTop: 20 }]}>
-            <Ionicons name="sunny-outline" size={14} color="#FFFFFF" />
-            <Text style={{ color: '#FFFFFF', fontSize: 13, marginLeft: 6 }}>
+            <Ionicons name="sunny-outline" size={14} color={CAM.text} />
+            <Text style={{ color: CAM.text, fontSize: 13, marginLeft: 6 }}>
               {language === 'en' ? 'Focus on top leaves in good light' : 'Enfoca hojas superiores con buena luz'}
             </Text>
           </View>
@@ -277,10 +278,10 @@ export default function CameraScreen() {
             activeOpacity={0.8}
             style={[glass, { flexDirection: 'row', alignItems: 'center', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9, marginBottom: 22, maxWidth: '100%' }]}>
             <Ionicons name="leaf" size={14} color={RETICLE} />
-            <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '600', marginLeft: 7, flexShrink: 1 }} numberOfLines={1}>
+            <Text style={{ color: CAM.text, fontSize: 13, fontWeight: '600', marginLeft: 7, flexShrink: 1 }} numberOfLines={1}>
               {currentCultivo.nombre}
             </Text>
-            <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.7)" style={{ marginLeft: 6 }} />
+            <Ionicons name="chevron-down" size={14} color={CAM.textSoft} style={{ marginLeft: 6 }} />
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: 300 }}>
@@ -288,7 +289,7 @@ export default function CameraScreen() {
               onPress={pickImageFromGallery}
               accessibilityLabel={language === 'en' ? 'Open gallery' : 'Abrir galería'}
               style={[glass, { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' }]}>
-              <Ionicons name="images-outline" size={22} color="#FFFFFF" />
+              <Ionicons name="images-outline" size={22} color={CAM.text} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -301,19 +302,19 @@ export default function CameraScreen() {
                 height: 82,
                 borderRadius: 41,
                 borderWidth: 4,
-                borderColor: '#FFFFFF',
+                borderColor: CAM.shutter,
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: isCapturing || !isCameraReady ? 0.5 : 1,
               }}>
-              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#FFFFFF' }} />
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: CAM.shutter }} />
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={toggleFacing}
               accessibilityLabel={t('cambiarCamara')}
               style={[glass, { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' }]}>
-              <Ionicons name="camera-reverse-outline" size={23} color="#FFFFFF" />
+              <Ionicons name="camera-reverse-outline" size={23} color={CAM.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -352,8 +353,8 @@ export default function CameraScreen() {
                   borderRadius: 14,
                   marginBottom: 8,
                   borderWidth: 1,
-                  borderColor: isSelected ? theme.primary : theme.cardBorder,
-                  backgroundColor: isSelected ? theme.primaryLight : theme.card,
+                  borderColor: isSelected ? theme.primary : theme.glassBorder,
+                  backgroundColor: isSelected ? theme.primaryLight : theme.glassBg,
                 }}>
                 <IconTile icon="leaf" size={36} tone={isSelected ? 'primary' : 'neutral'} />
                 <View style={{ flex: 1, marginLeft: 12 }}>

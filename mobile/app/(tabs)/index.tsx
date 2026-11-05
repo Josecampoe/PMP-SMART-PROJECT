@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, Alert, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Alert, RefreshControl } from 'react-native';
 import { PressableScale, Reveal } from '../../components/motion';
+import { HomeSkeleton } from '../../components/Skeleton';
+import LeafImage from '../../components/LeafImage';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,8 +22,6 @@ import {
   type Tone,
 } from '../../components/ui';
 
-const FALLBACK_IMG = 'https://images.unsplash.com/photo-1555431189-0ab279e2be3a';
-
 export default function Inicio() {
   const router = useRouter();
   const {
@@ -34,6 +34,7 @@ export default function Inicio() {
     addCultivo,
     vincularParcelaPorCodigo,
     refreshData,
+    isLoading,
     theme,
     language,
     t,
@@ -191,6 +192,12 @@ export default function Inicio() {
               <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 20 }}>{t('subtituloInicio')}</Text>
             </Reveal>
 
+            {isLoading ? (
+              <Reveal index={1}>
+                <HomeSkeleton />
+              </Reveal>
+            ) : (
+            <>
             {/* Acción principal */}
             <Reveal index={1}>
             <PressableScale
@@ -205,17 +212,17 @@ export default function Inicio() {
                 ...heroShadow,
               }}>
               {/* Hojas decorativas */}
-              <Ionicons name="leaf" size={150} color="rgba(255,255,255,0.06)" style={{ position: 'absolute', right: -28, top: -30, transform: [{ rotate: '-20deg' }] }} />
-              <Ionicons name="leaf" size={70} color="rgba(255,255,255,0.05)" style={{ position: 'absolute', right: 90, bottom: -22, transform: [{ rotate: '35deg' }] }} />
+              <Ionicons name="leaf" size={150} color={theme.bannerDecor} style={{ position: 'absolute', right: -28, top: -30, transform: [{ rotate: '-20deg' }] }} />
+              <Ionicons name="leaf" size={70} color={theme.bannerDecor} style={{ position: 'absolute', right: 90, bottom: -22, transform: [{ rotate: '35deg' }] }} />
 
-              <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Ionicons name="scan" size={24} color="#FFFFFF" />
+              <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: theme.bannerChipBg, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <Ionicons name="scan" size={24} color={theme.bannerText} />
               </View>
               <Text style={{ color: theme.bannerText, fontSize: 21, fontWeight: '800', letterSpacing: -0.4 }}>{t('analizarPlanta')}</Text>
-              <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, marginTop: 4, marginBottom: 16, lineHeight: 20 }}>
+              <Text style={{ color: theme.bannerTextSoft, fontSize: 14, marginTop: 4, marginBottom: 16, lineHeight: 20 }}>
                 {t('subtituloAnalizar')}
               </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', backgroundColor: '#FFFFFF', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', backgroundColor: theme.bannerText, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999 }}>
                 <Ionicons name="camera" size={15} color={theme.bannerBg} />
                 <Text style={{ color: theme.bannerBg, fontSize: 14, fontWeight: '700', marginLeft: 6 }}>
                   {language === 'en' ? 'Open camera' : 'Abrir cámara'}
@@ -246,9 +253,9 @@ export default function Inicio() {
 
             {/* Métricas */}
             <Reveal index={3} style={{ flexDirection: 'row', gap: 10, marginBottom: 28 }}>
-              <StatTile value={cultivos.length} label={t('metricasParcelas')} icon="map-outline" tone="primary" />
-              <StatTile value={analisisHistorial.length} label={t('metricasEscaneos')} icon="scan-outline" tone="info" />
-              <StatTile value={casosPendientes.length} label={t('metricasEnRevision')} icon="hourglass-outline" tone="warning" />
+              <StatTile animate value={cultivos.length} label={t('metricasParcelas')} icon="map-outline" tone="primary" />
+              <StatTile animate value={analisisHistorial.length} label={t('metricasEscaneos')} icon="scan-outline" tone="info" />
+              <StatTile animate value={casosPendientes.length} label={t('metricasEnRevision')} icon="hourglass-outline" tone="warning" />
             </Reveal>
 
             {/* Sin parcelas */}
@@ -311,11 +318,7 @@ export default function Inicio() {
                       <PressableScale
                         onPress={() => router.push('/(tabs)/historial')}
                         style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
-                        <Image
-                          source={{ uri: item.imageUri || FALLBACK_IMG }}
-                          style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: theme.surfaceAlt }}
-                          resizeMode="cover"
-                        />
+                        <LeafImage uri={item.imageUri} style={{ width: 48, height: 48, borderRadius: 12 }} iconSize={20} />
                         <View style={{ flex: 1, marginLeft: 14 }}>
                           <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text }} numberOfLines={1}>
                             {item.diagnostico || (language === 'en' ? 'Diagnosis' : 'Diagnóstico')}
@@ -335,6 +338,8 @@ export default function Inicio() {
                 </Card>
               </Reveal>
             )}
+            </>
+            )}
           </View>
         ) : (
           /* ===== MODO TÉCNICO ===== */
@@ -346,6 +351,12 @@ export default function Inicio() {
               </Text>
             </Reveal>
 
+            {isLoading ? (
+              <Reveal index={1}>
+                <HomeSkeleton />
+              </Reveal>
+            ) : (
+            <>
             {/* Credencial */}
             <Reveal index={1}>
             <View
@@ -357,17 +368,17 @@ export default function Inicio() {
                 overflow: 'hidden',
                 ...heroShadow,
               }}>
-              <Ionicons name="shield-checkmark" size={140} color="rgba(255,255,255,0.06)" style={{ position: 'absolute', right: -24, top: -24 }} />
-              <Text style={{ fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.7)' }}>
+              <Ionicons name="shield-checkmark" size={140} color={theme.bannerDecor} style={{ position: 'absolute', right: -24, top: -24 }} />
+              <Text style={{ fontSize: 13, fontWeight: '600', color: theme.bannerTextSoft }}>
                 {language === 'en' ? 'Agronomist panel' : 'Panel técnico agronómico'}
               </Text>
               <Text style={{ fontSize: 19, fontWeight: '800', color: theme.bannerText, marginTop: 4 }} numberOfLines={1}>
                 {perfilTecnico?.nombre || (language === 'en' ? 'Agronomist' : 'Ing. Agrónomo')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.14)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
-                  <Ionicons name="ribbon-outline" size={13} color="#FFFFFF" />
-                  <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600', marginLeft: 5 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme.bannerChipBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
+                  <Ionicons name="ribbon-outline" size={13} color={theme.bannerText} />
+                  <Text style={{ color: theme.bannerText, fontSize: 12, fontWeight: '600', marginLeft: 5 }}>
                     {perfilTecnico?.registroProfesional || 'Reg. Profesional'}
                   </Text>
                 </View>
@@ -377,9 +388,9 @@ export default function Inicio() {
 
             {/* Métricas */}
             <Reveal index={2} style={{ flexDirection: 'row', gap: 10, marginBottom: 28 }}>
-              <StatTile value={casosPendientes.length} label={language === 'en' ? 'To review' : 'Por revisar'} icon="hourglass-outline" tone="warning" />
-              <StatTile value={casosRevisados.length} label={language === 'en' ? 'Audited' : 'Auditados'} icon="checkmark-done-outline" tone="primary" />
-              <StatTile value={cultivos.length} label={t('metricasParcelas')} icon="map-outline" tone="info" />
+              <StatTile animate value={casosPendientes.length} label={language === 'en' ? 'To review' : 'Por revisar'} icon="hourglass-outline" tone="warning" />
+              <StatTile animate value={casosRevisados.length} label={language === 'en' ? 'Audited' : 'Auditados'} icon="checkmark-done-outline" tone="primary" />
+              <StatTile animate value={cultivos.length} label={t('metricasParcelas')} icon="map-outline" tone="info" />
             </Reveal>
 
             {/* Casos pendientes */}
@@ -403,11 +414,7 @@ export default function Inicio() {
                     <PressableScale
                       onPress={() => router.push('/(tabs)/historial')}
                       style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
-                      <Image
-                        source={{ uri: item.imageUri || FALLBACK_IMG }}
-                        style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: theme.surfaceAlt }}
-                        resizeMode="cover"
-                      />
+                      <LeafImage uri={item.imageUri} style={{ width: 48, height: 48, borderRadius: 12 }} iconSize={20} />
                       <View style={{ flex: 1, marginLeft: 14 }}>
                         <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text }} numberOfLines={1}>
                           {item.diagnostico || (language === 'en' ? 'Possible PMP' : 'Posible PMP')}
@@ -433,6 +440,8 @@ export default function Inicio() {
                 onPress={() => setModalVincular(true)}
               />
             </Reveal>
+            </>
+            )}
           </View>
         )}
       </ScrollView>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert, ActivityIndicator, Share, RefreshControl } from 'react-native';
 import { PressableScale, Reveal } from '../../components/motion';
+import { ListSkeleton } from '../../components/Skeleton';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -43,6 +44,7 @@ export default function CultivosScreen() {
     setSelectedCultivoId,
     analisisHistorial,
     refreshData,
+    isLoading,
     theme,
     language,
     t,
@@ -269,7 +271,11 @@ export default function CultivosScreen() {
           <SectionTitle title={language === 'en' ? `Registered plots · ${cultivos.length}` : `Parcelas registradas · ${cultivos.length}`} />
         </Reveal>
 
-        {cultivos.length === 0 ? (
+        {isLoading ? (
+          <Reveal index={2}>
+            <ListSkeleton rows={3} media={44} />
+          </Reveal>
+        ) : cultivos.length === 0 ? (
           <Reveal index={2}>
           <EmptyState
             icon={esTecnico ? 'shield-checkmark-outline' : 'leaf-outline'}

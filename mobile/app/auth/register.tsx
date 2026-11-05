@@ -7,7 +7,8 @@ import { StatusBar } from 'expo-status-bar';
 import { authApi } from '../../lib/api';
 import type { RolUsuario } from '../../lib/types';
 import FieldBackground from '../../components/FieldBackground';
-import { AUTH, AuthBrand, AuthButton, AuthField } from '../../components/AuthUI';
+import { AUTH, AuthBrand, AuthButton, AuthError, AuthField } from '../../components/AuthUI';
+import { useApp } from '../../context/AppContext';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -18,6 +19,8 @@ export default function RegisterScreen() {
   const [rol, setRol] = useState<RolUsuario>('agricultor');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { t } = useApp();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
@@ -39,20 +42,21 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!nombre.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Campos requeridos', 'Completa todos los campos obligatorios.');
+      setError(t('authErrCamposRegistro'));
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Contraseña débil', 'La contraseña debe tener al menos 6 caracteres.');
+      setError(t('authErrPasswordCorta'));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Las contraseñas no coinciden', 'Verifica que ambas contraseñas sean iguales.');
+      setError(t('authErrPasswordNoCoincide'));
       return;
     }
 
+    setError(null);
     setIsLoading(true);
 
     const result = await authApi.register({
@@ -65,7 +69,7 @@ export default function RegisterScreen() {
     setIsLoading(false);
 
     if (!result.success) {
-      Alert.alert('Error de Registro', result.error || 'No se pudo crear la cuenta.');
+      setError(result.error || t('authErrRegistro'));
       return;
     }
 
@@ -170,7 +174,10 @@ export default function RegisterScreen() {
                   label="Nombre completo"
                   icon="user-o"
                   value={nombre}
-                  onChangeText={setNombre}
+                  onChangeText={(v) => {
+                    setNombre(v);
+                    if (error) setError(null);
+                  }}
                   placeholder={rol === 'agricultor' ? 'Juan Pérez' : 'Ing. María López'}
                   autoCapitalize="words"
                 />
@@ -178,7 +185,10 @@ export default function RegisterScreen() {
                   label="Correo electrónico"
                   icon="envelope-o"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(v) => {
+                    setEmail(v);
+                    if (error) setError(null);
+                  }}
                   placeholder="nombre@finca.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -188,7 +198,10 @@ export default function RegisterScreen() {
                   label="Contraseña"
                   icon="lock"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(v) => {
+                    setPassword(v);
+                    if (error) setError(null);
+                  }}
                   placeholder="Mínimo 6 caracteres"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
@@ -198,12 +211,16 @@ export default function RegisterScreen() {
                   label="Confirmar contraseña"
                   icon="lock"
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={(v) => {
+                    setConfirmPassword(v);
+                    if (error) setError(null);
+                  }}
                   placeholder="Repite tu contraseña"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                 />
 
+                <AuthError message={error} />
                 <AuthButton label="Crear cuenta" onPress={handleRegister} loading={isLoading} />
               </View>
 

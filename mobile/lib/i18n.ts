@@ -118,6 +118,17 @@ export const translations = {
     tomarFoto: 'Capturar',
     galeria: 'Galería',
     cambiarCamara: 'Girar',
+
+    // Estados de carga
+    cargando: 'Cargando',
+
+    // Login y registro
+    authErrCamposLogin: 'Ingresa tu correo y tu contraseña.',
+    authErrLogin: 'No se pudo iniciar sesión. Revisa tus datos e intenta de nuevo.',
+    authErrCamposRegistro: 'Completa todos los campos obligatorios.',
+    authErrPasswordCorta: 'La contraseña debe tener al menos 6 caracteres.',
+    authErrPasswordNoCoincide: 'Las contraseñas no coinciden.',
+    authErrRegistro: 'No se pudo crear la cuenta.',
   },
   en: {
     // Tabs
@@ -236,6 +247,17 @@ export const translations = {
     tomarFoto: 'Capture',
     galeria: 'Gallery',
     cambiarCamara: 'Flip',
+
+    // Loading states
+    cargando: 'Loading',
+
+    // Sign in and sign up
+    authErrCamposLogin: 'Enter your email and password.',
+    authErrLogin: 'Could not sign in. Check your details and try again.',
+    authErrCamposRegistro: 'Fill in all required fields.',
+    authErrPasswordCorta: 'Password must be at least 6 characters.',
+    authErrPasswordNoCoincide: 'Passwords do not match.',
+    authErrRegistro: 'Could not create the account.',
   },
 };
 

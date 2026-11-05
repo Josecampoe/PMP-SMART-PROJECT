@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, Alert, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Alert, RefreshControl } from 'react-native';
 import { PressableScale, Reveal } from '../../components/motion';
+import { ListSkeleton } from '../../components/Skeleton';
+import LeafImage from '../../components/LeafImage';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,6 +27,7 @@ export default function Historial() {
     guardarRevisionTecnica,
     perfilTecnico,
     refreshData,
+    isLoading,
     theme,
     language,
     t,
@@ -210,7 +213,11 @@ export default function Historial() {
         </Reveal>
 
         {/* Listado */}
-        {itemsFiltrados.length === 0 ? (
+        {isLoading ? (
+          <Reveal index={2}>
+            <ListSkeleton rows={5} media={68} />
+          </Reveal>
+        ) : itemsFiltrados.length === 0 ? (
           <Reveal index={2}>
           <EmptyState
             icon="document-text-outline"
@@ -237,11 +244,7 @@ export default function Historial() {
               <Card onPress={() => setSelectedAnalisis(item)} padding={12} style={{ marginBottom: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View>
-                    <Image
-                      source={{ uri: item.imageUri || 'https://images.unsplash.com/photo-1555431189-0ab279e2be3a' }}
-                      style={{ width: 68, height: 68, borderRadius: 14, backgroundColor: theme.surfaceAlt }}
-                      resizeMode="cover"
-                    />
+                    <LeafImage uri={item.imageUri} style={{ width: 68, height: 68, borderRadius: 14 }} iconSize={26} />
                     <View
                       style={{
                         position: 'absolute',
@@ -251,7 +254,7 @@ export default function Historial() {
                         height: 12,
                         borderRadius: 6,
                         borderWidth: 2,
-                        borderColor: theme.card,
+                        borderColor: theme.glassStrong,
                         backgroundColor: esAlerta ? theme.warning : theme.primary,
                       }}
                     />
@@ -287,7 +290,7 @@ export default function Historial() {
           title={language === 'en' ? 'Phytosanitary report' : 'Reporte fitosanitario'}
           subtitle={`${selectedAnalisis.cultivoNombre || ''}${selectedAnalisis.fecha ? ` · ${selectedAnalisis.fecha}` : ''}`}>
           <View style={{ width: '100%', height: 200, borderRadius: 18, overflow: 'hidden', marginBottom: 16, backgroundColor: theme.surfaceAlt }}>
-            <Image source={{ uri: selectedAnalisis.imageUri || 'https://images.unsplash.com/photo-1555431189-0ab279e2be3a' }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            <LeafImage uri={selectedAnalisis.imageUri} style={{ width: '100%', height: '100%' }} iconSize={48} />
           </View>
 
           {/* Diagnóstico */}
