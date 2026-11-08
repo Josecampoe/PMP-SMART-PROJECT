@@ -38,8 +38,36 @@ export type {
 // ============================================================
 // Configuración
 // ============================================================
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+// URL pública del proxy de la IA (no es secreta). La clave de Gemini vive solo en el servidor.
+const API_BASE_URL = (process.env.EXPO_PUBLIC_API_URL || '').replace(/\/+$/, '');
+
+// Tiempos del análisis con IA
+const TIEMPO_AVISO_LENTO_MS = 8_000; // pasado este tiempo se muestra "Despertando el servidor…"
+const TIEMPO_TOTAL_MS = 90_000;
+const MAX_INTENTOS = 3;
+const ESPERA_ENTRE_INTENTOS_MS = 3_000;
+
+export type EstadoProceso = 'analizando' | 'despertando';
+
+const esperar = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Devuelve la imagen en base64 (sin el prefijo data:) desde un data URI, una URL o un archivo local. */
+async function leerImagenBase64(uri: string): Promise<string> {
+  if (uri.startsWith('data:image')) {
+    return uri.split(';base64,')[1] || '';
+  }
+  if (uri.startsWith('http')) {
+    const blob = await (await fetch(uri)).blob();
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => (typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('FileReader no devolvió texto')));
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    return dataUrl.includes(';base64,') ? dataUrl.split(';base64,')[1] : dataUrl;
+  }
+  return FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+}
 
 // Constantes de AsyncStorage
 const TOKEN_KEY = '@pmp_smart_access_token';
@@ -369,146 +397,86 @@ export const cultivosApi = {
 // ============================================================
 
 export const analisisApi = {
-  // Procesar imagen directamente con Gemini AI (sin depender de un backend o servidor)
-  async procesar(imageUri: string, language: 'es' | 'en' = 'es'): Promise<ApiResponse<any>> {
-    if (!GEMINI_API_KEY) {
-      return {
-        success: false,
-        error: language === 'en'
-          ? 'The AI key is not configured (EXPO_PUBLIC_GEMINI_API_KEY).'
-          : 'Falta configurar la clave de la IA (EXPO_PUBLIC_GEMINI_API_KEY).',
-      };
+  /**
+   * Envía la foto al proxy de PMP Smart (EXPO_PUBLIC_API_URL), que consulta a Gemini con la
+   * clave guardada en el servidor. La app nunca tiene la clave.
+   * `onEstado('despertando')` avisa cuando el servidor tarda en responder.
+   */
+  async procesar(
+    imageUri: string,
+    language: 'es' | 'en' = 'es',
+    onEstado?: (estado: EstadoProceso) => void,
+  ): Promise<ApiResponse<any>> {
+    const en = language === 'en';
+    if (!API_BASE_URL) {
+      return { success: false, error: en ? 'The app has no AI server configured.' : 'La app no tiene configurado el servidor de la IA.' };
     }
+
+    let base64 = '';
     try {
-      const cleanUri = decodeURIComponent(imageUri);
-      let base64 = '';
-      let mimeType = 'image/jpeg';
-
-      if (cleanUri.startsWith('data:image')) {
-        const parts = cleanUri.split(';base64,');
-        mimeType = parts[0].replace('data:', '') || 'image/jpeg';
-        base64 = parts[1];
-      } else if (cleanUri.startsWith('http')) {
-        const response = await fetch(cleanUri);
-        const blob = await response.blob();
-        base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            if (typeof reader.result === 'string') {
-              const res = reader.result;
-              if (res.includes(';base64,')) {
-                resolve(res.split(';base64,')[1]);
-              } else {
-                resolve(res);
-              }
-            } else {
-              reject(new Error('FileReader no retornó string'));
-            }
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-      } else {
-        base64 = await FileSystem.readAsStringAsync(cleanUri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        if (cleanUri.toLowerCase().endsWith('.png')) {
-          mimeType = 'image/png';
-        }
-      }
-
-      if (!base64) {
-        return { success: false, error: language === 'en' ? 'Could not retrieve image for analysis.' : 'No se pudo obtener la imagen para el análisis.' };
-      }
-
-      const prompt = language === 'en'
-        ? `You are an expert plant pathologist and agronomist specializing in potato diseases. Analyze the following potato plant/leaf image.
-Look for visual symptoms of "Potato Purple Top" (PMP) or "Zebra Chip" syndrome.
-Strictly return a valid JSON object matching this exact structure (no markdown fences, no explanatory text outside the JSON):
-{
-  "diagnostico": "Possible PMP" or "Healthy" or "Severe PMP" or "Nutritional Deficiency",
-  "estado": "alerta" or "sano" or "observacion",
-  "severidad": "baja" or "moderada" or "alta" or "ninguna",
-  "confianza": 95,
-  "sintomas": ["symptom 1 in English", "symptom 2 in English"],
-  "recomendaciones": ["recommendation 1 in English", "recommendation 2 in English"]
-}
-Notice: 'estado' and 'severidad' must remain as standard key values, but 'diagnostico', 'sintomas', and 'recomendaciones' MUST be written entirely in fluent, professional English.`
-        : `Eres un agrónomo experto en patología vegetal de la papa. Analiza la siguiente imagen.
-Busca signos visuales de "Punta Morada de la Papa" (PMP).
-Devuelve estrictamente un JSON válido con esta estructura exacta (no uses markdown ni texto adicional fuera del JSON):
-{
-  "diagnostico": "Posible PMP" o "Sano" o "PMP Severo" o "Deficiencia Nutricional",
-  "estado": "alerta" o "sano" o "observacion",
-  "severidad": "baja" o "moderada" o "alta" o "ninguna",
-  "confianza": 95,
-  "sintomas": ["sintoma 1", "sintoma 2"],
-  "recomendaciones": ["recomendacion 1", "recomendacion 2"]
-}`;
-
-      // Modelos oficiales vigentes y verificados con respaldo automático
-      const models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite', 'gemini-3.5-flash'];
-      let parsedData: any = null;
-      let lastErrorMessage = '';
-
-      for (const model of models) {
-        try {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{
-                parts: [
-                  { text: prompt },
-                  {
-                    inlineData: {
-                      mimeType: mimeType,
-                      data: base64,
-                    }
-                  }
-                ]
-              }],
-              generationConfig: {
-                responseMimeType: 'application/json'
-              }
-            })
-          });
-
-          if (!response.ok) {
-            const errJson = await response.json().catch(() => null);
-            lastErrorMessage = errJson?.error?.message || `HTTP ${response.status}`;
-            console.warn(`[Gemini Direct] Modelo ${model} respondió error:`, lastErrorMessage);
-            continue;
-          }
-
-          const result = await response.json();
-          const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (responseText) {
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              parsedData = JSON.parse(jsonMatch[0]);
-              break;
-            }
-          }
-        } catch (mErr: any) {
-          lastErrorMessage = mErr.message;
-          console.warn(`[Gemini Direct] Excepción con modelo ${model}:`, mErr.message);
-        }
-      }
-
-      if (!parsedData) {
-        return {
-          success: false,
-          error: lastErrorMessage ? `Error de IA: ${lastErrorMessage}` : 'No se pudo generar el diagnóstico con IA.'
-        };
-      }
-
-      return { success: true, data: parsedData };
+      base64 = await leerImagenBase64(decodeURIComponent(imageUri));
     } catch (e: any) {
-      console.warn('Error procesando imagen localmente:', e.message);
-      return { success: false, error: 'Error procesando la imagen con IA.' };
+      console.warn('No se pudo leer la imagen:', e?.message);
     }
+    if (!base64) {
+      return { success: false, error: en ? 'Could not retrieve image for analysis.' : 'No se pudo obtener la imagen para el análisis.' };
+    }
+
+    const cuerpo = JSON.stringify({ imageBase64: base64, language });
+    const inicio = Date.now();
+    onEstado?.('analizando');
+
+    for (let intento = 1; intento <= MAX_INTENTOS; intento++) {
+      const restante = TIEMPO_TOTAL_MS - (Date.now() - inicio);
+      if (restante <= 0) break;
+
+      const control = new AbortController();
+      const corte = setTimeout(() => control.abort(), restante);
+      const avisoLento = setTimeout(() => onEstado?.('despertando'), intento === 1 ? TIEMPO_AVISO_LENTO_MS : 0);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/analisis/procesar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept-Language': language },
+          body: cuerpo,
+          signal: control.signal,
+        });
+        const datos: any = await response.json().catch(() => null);
+
+        if (datos && typeof datos.success === 'boolean') {
+          return datos as ApiResponse<any>;
+        }
+        // Sin JSON y con 502/503/504: el servidor se está iniciando, se reintenta
+        if (![502, 503, 504].includes(response.status)) {
+          return { success: false, error: en ? `Unexpected server response (HTTP ${response.status}).` : `El servidor respondió algo inesperado (HTTP ${response.status}).` };
+        }
+        onEstado?.('despertando');
+      } catch (e: any) {
+        if (control.signal.aborted) {
+          return {
+            success: false,
+            error: en
+              ? 'The server took too long to respond. Check your signal and try again.'
+              : 'El servidor tardó demasiado en responder. Revisa tu señal e intenta de nuevo.',
+          };
+        }
+        // Error de red: sin internet o el servidor todavía no acepta conexiones
+        console.warn(`Intento ${intento} sin conexión con el servidor:`, e?.message);
+        onEstado?.('despertando');
+      } finally {
+        clearTimeout(corte);
+        clearTimeout(avisoLento);
+      }
+
+      if (intento < MAX_INTENTOS) await esperar(ESPERA_ENTRE_INTENTOS_MS * intento);
+    }
+
+    return {
+      success: false,
+      error: en
+        ? 'Could not connect to the server. Check your internet connection and try again.'
+        : 'No se pudo conectar con el servidor. Revisa tu conexión a internet e intenta de nuevo.',
+    };
   },
 
   async list(): Promise<ApiResponse<Analisis[]>> {

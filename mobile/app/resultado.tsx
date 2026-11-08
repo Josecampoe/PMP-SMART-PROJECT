@@ -5,7 +5,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
-import { analisisApi } from '../lib/api';
+import { analisisApi, type EstadoProceso } from '../lib/api';
 import { Button, Card, IconButton, IconTile } from '../components/ui';
 import { Reveal, useReduceMotion } from '../components/motion';
 import LeafImage from '../components/LeafImage';
@@ -53,11 +53,12 @@ export default function ResultadoScreen() {
   const [isProcessing, setIsProcessing] = useState(true);
   const [aiData, setAiData] = useState<any>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [estadoProceso, setEstadoProceso] = useState<EstadoProceso>('analizando');
 
   useEffect(() => {
     const procesarIA = async () => {
       try {
-        const res = await analisisApi.procesar(displayImageUri, language);
+        const res = await analisisApi.procesar(displayImageUri, language, setEstadoProceso);
         if (res.success && res.data) {
           setAiData(res.data);
         } else {
@@ -181,8 +182,8 @@ export default function ResultadoScreen() {
             <Reveal index={1}>
             <Card padding={28} style={{ alignItems: 'center' }}>
               <ActivityIndicator size="large" color={theme.primary} />
-              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginTop: 16, textAlign: 'center' }}>{t('analizando')}</Text>
-              <Text style={{ fontSize: 14, color: theme.textMuted, marginTop: 4, textAlign: 'center', lineHeight: 20 }}>{t('analizandoDesc')}</Text>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginTop: 16, textAlign: 'center' }}>{t(estadoProceso === 'despertando' ? 'despertando' : 'analizando')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textMuted, marginTop: 4, textAlign: 'center', lineHeight: 20 }}>{t(estadoProceso === 'despertando' ? 'despertandoDesc' : 'analizandoDesc')}</Text>
             </Card>
             </Reveal>
           ) : apiError ? (

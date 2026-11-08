@@ -9,6 +9,7 @@ import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-ca
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useApp } from '../context/AppContext';
+import { prepararFoto } from '../lib/imagen';
 import { cameraColors as CAM } from '../lib/theme';
 import { Button, Field, IconButton, IconTile, Sheet } from '../components/ui';
 
@@ -64,11 +65,12 @@ export default function CameraScreen() {
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.85,
-        base64: true,
       });
 
-      if (!result.canceled && result.assets?.[0]?.base64) {
-        setCurrentImageB64(result.assets[0].base64);
+      const asset = !result.canceled ? result.assets?.[0] : undefined;
+      const base64 = asset ? await prepararFoto(asset.uri, asset.width, asset.height) : null;
+      if (base64) {
+        setCurrentImageB64(base64);
 
         router.push({
           pathname: '/resultado',
@@ -91,16 +93,17 @@ export default function CameraScreen() {
       setIsCapturing(true);
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.75, // Previene OOM al no solicitar máxima resolución
-        base64: true, // Previene saturación del bridge nativo
       });
 
-      if (photo?.base64) {
+      // Reducir la foto antes de enviarla para que suba rápido con poca señal
+      const base64 = photo ? await prepararFoto(photo.uri, photo.width, photo.height) : null;
+      if (base64) {
         // Restaurar la vista previa
-        if (cameraRef.current.resumePreview) {
+        if (cameraRef.current?.resumePreview) {
           await cameraRef.current.resumePreview();
         }
 
-        setCurrentImageB64(photo.base64);
+        setCurrentImageB64(base64);
 
         router.push({
           pathname: '/resultado',
