@@ -1,5 +1,18 @@
 # Registro de cambios
 
+## 1.3.0
+
+### Funciones
+- El diagnóstico con IA funciona en el APK público: la app envía la foto a un proxy en Cloudflare Workers, que consulta Gemini con la clave guardada en el servidor. La app ya no lleva ninguna clave.
+- La foto se reduce a 1280 px antes de enviarla, para que suba rápido con poca señal.
+- Si el servidor tarda, la app muestra "Despertando el servidor…" y reintenta en lugar de fallar.
+- Errores claros en español: sin conexión, cuota agotada, imagen inválida o demasiado grande, límite de análisis.
+
+### Servidor
+- `backend/` pasa de Express a Cloudflare Workers.
+- Valida el tipo real de la imagen (JPEG, PNG o WebP) y su tamaño (máximo 6 MB).
+- Límite por IP: 5 análisis por minuto y 30 al día, para proteger la cuota de Gemini.
+
 ## 1.2.0
 
 ### Interfaz

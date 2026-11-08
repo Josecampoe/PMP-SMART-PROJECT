@@ -20,8 +20,7 @@ App en **Expo SDK 57** con **expo-router**.
 
 Copia `.env.example` como `.env.local`:
 
-- `EXPO_PUBLIC_GEMINI_API_KEY`: clave de Google Gemini para el diagnóstico.
-- `EXPO_PUBLIC_API_URL`: URL del backend (opcional).
+- `EXPO_PUBLIC_API_URL`: URL del proxy de la IA (`backend/`). Es pública: la clave de Gemini vive solo en el servidor y la app nunca la tiene.
 
 `.env.local` está en `.gitignore` y nunca se sube al repositorio.
 

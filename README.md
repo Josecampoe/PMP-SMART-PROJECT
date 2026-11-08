@@ -7,7 +7,7 @@ Aplicación móvil para el monitoreo fitosanitario de cultivos de papa. Permite 
 | Carpeta | Contenido |
 | --- | --- |
 | [`mobile/`](mobile) | App en Expo (React Native) para Android e iOS |
-| [`backend/`](backend) | API en Express que hace de intermediario con Gemini |
+| [`backend/`](backend) | Proxy en Cloudflare Workers: recibe la foto y consulta a Gemini con la clave guardada en el servidor |
 | [`docs/`](docs) | Arquitectura, sistema de diseño y guía para compilar el APK |
 
 ## Funciones principales
@@ -24,13 +24,13 @@ Aplicación móvil para el monitoreo fitosanitario de cultivos de papa. Permite 
 # App móvil
 cd mobile
 npm install
-cp .env.example .env.local   # completa la clave de Gemini
+cp .env.example .env.local   # URL del proxy de la IA
 npm start
 
-# Backend (opcional)
+# Proxy de la IA (solo si lo vas a modificar)
 cd backend
 npm install
-cp .env.example .env
+cp .dev.vars.example .dev.vars   # clave de Gemini, solo en tu PC
 npm run dev
 ```
 

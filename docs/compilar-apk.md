@@ -10,14 +10,16 @@ npm install
 npx eas-cli login        # cuenta de Expo dueña del proyecto
 ```
 
-## 2. Configurar la clave de la IA
+## 2. Configurar la URL del proxy
 
-`.env.local` no se sube a EAS, así que la clave se guarda como variable del proyecto:
+La app no lleva la clave de Gemini: toda variable `EXPO_PUBLIC_` queda dentro del APK y cualquiera puede extraerla. La clave vive solo en el proxy (`backend/`), y la app solo necesita su URL, que es pública:
 
 ```bash
-npx eas-cli env:create --name EXPO_PUBLIC_GEMINI_API_KEY --value "TU_CLAVE" \
-  --environment preview --visibility sensitive
+npx eas-cli env:create --name EXPO_PUBLIC_API_URL --value "https://pmp-smart-api.<tu-subdominio>.workers.dev" \
+  --environment preview --visibility plaintext
 ```
+
+Nunca crees una variable con la clave de Gemini en EAS.
 
 ## 3. Compilar
 
