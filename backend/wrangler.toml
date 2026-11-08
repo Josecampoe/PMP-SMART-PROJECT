@@ -1,0 +1,23 @@
+# Proxy de PMP Smart en Cloudflare Workers.
+# La clave de Gemini NO va aquí: se guarda como secreto con
+#   npx wrangler secret put GEMINI_API_KEY
+name = "pmp-smart-api"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+[vars]
+# Análisis permitidos por IP al día
+LIMITE_DIARIO = "30"
+# Modelos de Gemini en orden de preferencia (separados por coma)
+MODELOS = "gemini-3.5-flash,gemini-flash-lite-latest,gemini-flash-latest"
+
+# Límite por IP: 5 análisis por minuto
+[[ratelimits]]
+name = "LIMITE_MINUTO"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
+# Contador diario por IP
+[[kv_namespaces]]
+binding = "CUOTA"
+id = "ea94be88fb944e38b898ca6afc01a56b"

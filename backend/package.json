@@ -1,30 +1,21 @@
 {
   "name": "pmp-smart-api",
-  "version": "1.0.0",
-  "description": "API REST para PMP Smart - Detección de Punta Morada de la Papa",
-  "main": "src/index.ts",
+  "version": "1.3.0",
+  "description": "Proxy de PMP Smart: recibe la foto, llama a Google Gemini y devuelve el diagnóstico",
+  "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts",
-    "build": "tsc",
-    "serve": "node dist/index.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "helmet": "^8.1.0",
-    "multer": "^1.4.5-lts.2"
-  },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.2",
-    "@types/multer": "^1.4.12",
-    "@types/node": "^22.14.0",
-    "tsx": "^4.19.4",
-    "typescript": "~6.0.3"
+    "@cloudflare/workers-types": "^5.20261108.1",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.158.0"
   },
-  "private": true
+  "allowScripts": {
+    "workerd@1.20261104.1": true,
+    "esbuild@0.28.2": true,
+    "sharp@0.35.5": true
+  }
 }
